@@ -11,7 +11,7 @@ You have a class called Animal
 ``` csharp
 public class Animal
 {
-    public Animal GiveBirth() => return new Animal();
+    public Animal GiveBirth() => new Animal();
 }
 ```
 
@@ -20,7 +20,7 @@ Cat inherits from animal
 ``` csharp
 public class Cat : Animal
 {
-    public Cat GiveBirth() => return new Cat();
+    public Cat GiveBirth() => new Cat();
 }
 ```
 
@@ -43,7 +43,7 @@ public abstract class Animal
 
 public class Cat : Animal
 {
-    public override Cat GiveBirth() => return new Cat();
+    public override Cat GiveBirth() => new Cat();
 }
 ```
 That's great! Now everything works as expected:
@@ -75,7 +75,7 @@ public interface IAnimal
 
 public class Cat : IAnimal
 {
-    public Cat GiveBirth() => return new Cat();
+    public Cat GiveBirth() => new Cat();
     
     IAnimal IAnimal.GiveBirth() => GiveBirth();
 }
