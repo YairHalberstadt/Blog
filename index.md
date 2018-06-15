@@ -1,7 +1,4 @@
- ---
-layout: page
-title: Yair Halberstadt's Blog!
----
+
  
  {% for post in site.posts %}
   <article>
