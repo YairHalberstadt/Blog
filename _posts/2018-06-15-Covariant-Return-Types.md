@@ -66,7 +66,7 @@ The code, although making perfect logical sense, doesn't compile. C# doesn't yet
 
 ### Solution 1: Explicit Implementation of Interfaces
 
-Whenever possible interfaced should be preferred to classes anyway. Over here though, changing Animal to an interface gives us something functionally identical to Covariant return types.
+Whenever possible interfaces should be preferred to classes anyway. Over here though, changing Animal to an interface gives us something functionally identical to Covariant return types.
 ```
 public interface IAnimal
 {
