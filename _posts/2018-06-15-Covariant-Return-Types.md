@@ -27,8 +27,8 @@ public class Cat : Animal
 Great! That works fine. 
 Now what happens when we do this:
 ``` csharp
-var undercoverCat = (animal)new Cat();
-var babyCat = (cat)undercoverCat.GiveBirth();
+var undercoverCat = (Animal)new Cat();
+var babyCat = (Cat)undercoverCat.GiveBirth();
 ```
 
 Oops. We get an InvalidCastException.
@@ -50,8 +50,8 @@ That's great! Now everything works as expected:
 
 ``` csharp
 Cat cat = new Cat();
-var undercoverCat = (animal)Cat;
-Cat babyCat = (cat)undercoverCat.GiveBirth();
+var undercoverCat = (IAnimal)Cat;
+Cat babyCat = (Cat)undercoverCat.GiveBirth();
 babyCat = Cat.GiveBirth();
 ```
 
@@ -82,3 +82,70 @@ public class Cat : IAnimal
 ```
 
 This behaves as we want it to.
+
+``` csharp
+Cat cat = new Cat();
+var undercoverCat = (IAnimal)Cat;
+Cat babyCat = (Cat)undercoverCat.GiveBirth();
+babyCat = Cat.GiveBirth();
+```
+
+There are two disadvantages to this method. Firstly it increases code bloat, and secondly it only works when you can turn the base class into an interface., which isn't always possible. 
+
+However when it is possible I believe this is the cleanest solution.
+
+### Solution 2: Create 2 Methods
+
+The following code compiles fine:
+
+``` csharp
+public abstract class Animal
+{
+    public abstract Animal GiveBirth();
+}
+
+public class Cat : Animal
+{
+    public override Animal GiveBirth() => new Cat();
+}
+```
+
+The problem with it is that calling Cat.GiveBirth, returns an Animal, which I then have to downcast to a cat. This is tedious, reduces the readability of the code, and increases the chances of a runtime error by reducing type safety.
+
+So we can improve the code like this:
+
+``` csharp
+public abstract class Animal
+{
+    public abstract Animal GiveBirth();
+}
+
+public class Cat : Animal
+{
+    public override Animal GiveBirth() => GiveBirthToCat();
+    
+    public override Cat GiveBirthToCat() => new Cat();
+}
+```
+
+Then whenever we deal with a cat we call Cat.GiveBirthToCat(), and a Cat is returned. This though increases the number of functions, and is confusing to the consumer of this class - what is the difference between the two methods? It also feels odd to have two methods with different names do the same thing, and feels very much at odds with polymorphism. 
+
+Sometimes when a method takes a parameter, we can improve on this, and give both functions the same name. 
+
+``` csharp
+public abstract class Animal
+{
+    public abstract Animal Mate(Animal mate);
+}
+
+public class Cat : Animal
+{
+    public override Animal Mate(Animal mate) => mate is Cat cat? Mate(cat) : throw new ArgumentException("Cross Species Interbreeding Not Allowed");
+    
+    public override Cat Mate(Cat cat) => new Cat();
+}
+```
+
+This works very well in a case where the parameter ought to be of the same type as the class, but is of limited use elsewhere. 
+
+### Solution 3: Use a Private Virtual Method and Keep the Public Method Non-Virtual
