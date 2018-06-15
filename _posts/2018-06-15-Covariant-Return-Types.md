@@ -63,3 +63,22 @@ And there you have it! Covariant return types, or the ability to return a more d
 There's just one problem:
 
 The code, although making perfect logical sense, doesn't compile. C# doesn't yet support Covariant return types. They are supported by Java and some brands of C++, but C# doesn't yet have them. There is a feature request asking to implement them, but for now I will work through some stopgap solutions.
+
+### Solution 1: Explicit Implementation of Interfaces
+
+Whenever possible interfaced should be preferred to classes anyway. Over here though, changing Animal to an interface gives us something functionally identical to Covariant return types.
+```
+public interface IAnimal
+{
+    public IAnimal GiveBirth();
+}
+
+public class Cat : IAnimal
+{
+    public Cat GiveBirth() => return new Cat();
+    
+    IAnimal IAnimal.GiveBirth() => GiveBirth();
+}
+```
+
+This again behaves aa we want it to.
