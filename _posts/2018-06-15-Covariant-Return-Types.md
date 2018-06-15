@@ -1,7 +1,7 @@
 ---
 title: Covariant Return Types in C#
 ---
-## Covariant Return Types in C#
+## Covariant Return Types in CSharp
 ### What are Covariant Return Types?
 
 Consider the following problem:
