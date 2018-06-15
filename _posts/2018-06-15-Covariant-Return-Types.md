@@ -8,7 +8,7 @@ Consider the following problem:
 
 You have a class called Animal
 
-```
+``` csharp
 public class Animal
 {
     public Animal GiveBirth() => return new Animal();
@@ -17,7 +17,7 @@ public class Animal
 
 Cat inherits from animal
 
-```
+``` csharp
 public class Cat : Animal
 {
     public Cat GiveBirth() => return new Cat();
@@ -26,7 +26,7 @@ public class Cat : Animal
 
 Great! That works fine. 
 Now what happens when we do this:
-```
+``` csharp
 var undercoverCat = (animal)new Cat();
 var babyCat = (cat)undercoverCat.GiveBirth();
 ```
@@ -35,7 +35,7 @@ Oops. We get an InvalidCastException.
 
 If we want GiveBirth to return a new animal with the same type as the underlying type of the original animal when we call GiveBirth, we have to make the method virtual. We also ought to make Animal abstract, as it doesn't make sense to have an  animal which isnt a specific species.
 
-```
+``` csharp
 public abstract class Animal
 {
     public abstract Animal GiveBirth();
@@ -48,7 +48,7 @@ public class Cat : Animal
 ```
 That's great! Now everything works as expected:
 
-```
+``` csharp
 Cat cat = new Cat();
 var undercoverCat = (animal)Cat;
 Cat babyCat = (cat)undercoverCat.GiveBirth();
@@ -67,7 +67,7 @@ The code, although making perfect logical sense, doesn't compile. C# doesn't yet
 ### Solution 1: Explicit Implementation of Interfaces
 
 Whenever possible interfaces should be preferred to classes anyway. Over here though, changing Animal to an interface gives us something functionally identical to Covariant return types.
-```
+``` csharp
 public interface IAnimal
 {
     public IAnimal GiveBirth();
@@ -81,4 +81,4 @@ public class Cat : IAnimal
 }
 ```
 
-This again behaves aa we want it to.
+This behaves as we want it to.
