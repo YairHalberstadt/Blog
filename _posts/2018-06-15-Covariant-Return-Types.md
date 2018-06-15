@@ -1,5 +1,4 @@
 ---
-layout: post
 title: Covariant Return Types in C#
 ---
 ## What are Covariant Return Types?
