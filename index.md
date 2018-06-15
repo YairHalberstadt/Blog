@@ -3,7 +3,7 @@ I am a software developer specialising in C#, among other technologies. I hope t
   {% for post in site.posts %}
   <article>
     <h2>
-      <a href="{{ post.url }}">
+      <a href="{{site.baseurl}}{{ post.url }}">
         {{ post.title }}
       </a>
     </h2>
