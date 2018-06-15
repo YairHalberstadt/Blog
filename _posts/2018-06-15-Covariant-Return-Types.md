@@ -58,4 +58,8 @@ babyCat = Cat.GiveBirth();
 And there you have it! Covariant return types, or the ability to return a more derived type when overriding a virtual function.
 
 
+### The Problem
 
+There's just one problem:
+
+The code, although making perfect logical sense, doesn't compile. C# doesn't yet support Covariant return types. They are supported by Java and some brands of C++, but C# doesn't yet have them. There is a feature request asking to implement them, but for now I will work through some stopgap solutions.
