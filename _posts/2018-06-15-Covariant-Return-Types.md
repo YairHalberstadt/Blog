@@ -124,7 +124,7 @@ public class Cat : Animal
 {
     public override Animal GiveBirth() => GiveBirthToCat();
     
-    public override Cat GiveBirthToCat() => new Cat();
+    public Cat GiveBirthToCat() => new Cat();
 }
 ```
 
@@ -142,7 +142,7 @@ public class Cat : Animal
 {
     public override Animal Mate(Animal mate) => mate is Cat cat? Mate(cat) : throw new ArgumentException("Cross Species Interbreeding Not Allowed");
     
-    public override Cat Mate(Cat cat) => new Cat();
+    public Cat Mate(Cat cat) => new Cat();
 }
 ```
 
