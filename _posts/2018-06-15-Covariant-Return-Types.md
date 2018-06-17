@@ -149,3 +149,5 @@ public class Cat : Animal
 This works very well in a case where the parameter ought to be of the same type as the class, but is of limited use elsewhere. 
 
 ### Solution 3: Use a Private Virtual Method and Keep the Public Method Non-Virtual
+
+
