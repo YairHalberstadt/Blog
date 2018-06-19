@@ -1,0 +1,195 @@
+---
+title: Functions Or Interfaces
+---
+## Functions Or Interfaces
+
+Consider the following problem:
+
+You want to create a sum function, which adds up all the elements in a list.
+
+No problem - that's an easy one:
+
+``` csharp
+
+public static int Add(List<int> vals)
+{
+    int sum = 0;
+    foreach(var val in vals)
+        sum += val;
+    return sum;    
+}
+
+```
+
+Now that's great - but who told you the list would be a list of ints. What if it's a list of doubles? Or Complex numbers?
+
+You could go and define the add function for each of those types, but then you'll still need to rewrite the function if someone created their own type.
+
+### Method 1: Interfaces
+
+What we really want is something generic like this:
+
+``` csharp
+
+public static T Add<T>(List<T> vals) where  T : IAddable
+{
+    T sum = 0;
+    foreach(var val in vals)
+        sum += val;
+    return sum;    
+}
+
+```
+
+Unfortunately there is no IAddable, and even if you create it, it still won't work for Standard Library types, or any types not created with this function specifically in mind.
+
+If only C# had duck typing!
+
+But it has, I hear you cry:
+
+``` csharp
+
+public static T Add<T>(List<T> vals) 
+{
+    T sum = (dynamic)0;
+    foreach(var val in vals)
+        sum = ((dynamic) sum).Add(val);
+    return sum;    
+}
+
+```
+
+Very funny.
+
+Let me rephrase that; If only C# had type-safe, static, fast duck typing, like Go for example.
+
+Alas it does not. So in old C# we would have had to define an interface IAdder
+
+``` csharp
+
+public static TAddable Add<TAddable, TAdder>(List<TAddable> vals) where  TAdder : IAdder<TAddable>, new()
+{
+    var adder = new TAdder();
+    T sum = adder.Zero;
+    foreach(var val in vals)
+         sum = adder.Add(sum, val);
+    return sum;    
+}
+
+public interface Tadder<T>
+{
+    T Zero {get;}
+    T Sum(T first, T second);
+}
+
+```
+
+So we have too pass in an instance of IAdder, which tells us how to go about adding TAddable.
+
+This is horrible for a number of reasons. Firstly, it's overengineered, obtuse, and confusing.
+
+Secondly it requires instantiating an instance of IAdder just to access methods which require no state. That's code smell. Really the Zero property and the Sum method should be static, but that is impossible ( even if we were to use an abstract class instead of an interface for IAdder) since static methods cannot be overridden.
+
+The third point is a design one. By doing it this way it becomes impossible to change the definition of Sum at runtime, as the interface implementation has to be created at compile time. Sometimes this is what you want, and when that is the case this method is really you're only choice. Often though this is far too limiting.
+
+You can of course change the signature to
+
+``` csharp
+
+public static TAddable Add<TAddable>(List<TAddable> vals, IAdder<TAddable> adder)
+{
+    T sum = adder.Zero;
+    foreach(var val in vals)
+         sum = adder.Add(sum, val);
+    return sum;    
+}
+
+```
+
+This hides some of the design problems, and gives you more flexibility at runtime, but the underlying problems are still there. 
+
+You still have to instantiate an instance of an interface just to get at it's methods. And you still have to define the interfaces at compile time, even if you can wait till runtime to decide which version to use.
+
+We can avoid the second problem by creating this special instance of IAdder
+
+``` csharp
+
+public class RuntimeAdder<T> : IAdder<T>
+{
+    public T Zero {get;}
+    public T Sum(T first, T second) => _addFunc(first, second);
+    private Func<T,T,T> _addFunc;
+    public RuntimeAdder(T zero, Func<T,T,T> addFunc)
+    {
+        Zero = zero;
+        _addFunc = addFunc;
+    }
+}
+
+```
+
+Now this gives us full runtime control of the functions. It also voids the first problem, since it looks like you need an instantiated interface in order to hold state. However it is just another layer of indirection, when you need to call an instance method to access a Function.
+
+### Method 2: Functions
+
+What was the core thing that was wrong with our attempt to implement this behaviour with interfaces?
+
+It was that we were passing in an implementation of an interface, just in order to get to it's methods. All we were really interested in was the Add Function, and the property Zero. So instead of beating around the bush, passing in interfaces, let's just go straight to functions:
+
+``` csharp
+
+public static T Sum<T>(List<T> vals, T zero, Func<T,T,T> addFunc)
+{
+    var Sum = zero;
+    foreach(var val in vals)
+         sum = addFunc(sum, val);
+    return sum;
+}
+
+```
+
+Far cleaner, and about as clean as we're going to get.
+
+There's just one further improvement we can make. Note that we have no guarantee that the add function does any adding. This method will work whether or not addFunc is remotely connected to adding, and no matter what value we pass in as zero.
+
+All that matters is that zero is a T, and addFunc is a function that takes two Ts and returns a T. So in truth we've actually created an aggregate function which combines a list of Ts into one single T by repeatedly applying a function.
+
+Let's rename Sum to reflect that:
+
+``` csharp
+
+public static T Aggregate<T>(List<T> vals, T seed, Func<T,T,T> aggregator)
+{
+    var current = seed;
+    foreach(var val in vals)
+         current = aggregator(current, val);
+    return current;
+}
+
+```
+
+In fact, if T is a group under aggregator, and seed is the identity element, Aggregate becomes a Monad, one of the core patterns in functional programming, and can be converted into the MapReduce function. It's funny how just thinking about implementing a sum function in C#, bought us all the way deep into the heart of functional programming.
+
+Now this looks very similar to Linq.Aggregate. The two differences are that this is not an extension method, and that it takes a List not an IEnumerable.
+
+The first is purely cosmetic, but the second is actually quite interesting. IEnumerable is the way C# allows you to write as generic a function on enumeratable things as possible, and it uses an Interface to do so.
+
+Of course this has the standard problems with interfaces - it only works if the class happens to implement the interface, and it only gives one possible way to use the interface per class.
+
+How then would you give your own IEnumerable definition to a class if it doesn't implement IEnumerable, or doesn't implement it in the way you want?
+
+The easiest solution is to build a wrapper around the class and implement IEnumerable from there:
+
+``` csharp
+
+public class EnumerableWrapper : IEnumerable<SomeType>
+{
+     private NonEnumerableClass _instance;
+     public Wrapper(NonEnumerableClass instance) => _instance = instance;
+     public IEnumerator GetEnumerator() ...
+     ...
+}
+
+```
+
+
