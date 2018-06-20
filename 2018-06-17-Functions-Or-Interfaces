@@ -242,10 +242,64 @@ You would then pass in a function into Aggregate that takes the collection and r
 
 ``` csharp
 
-public static TItem Aggregate<TCollection, TItem, TSeed>(TCollection vals, Func<TCollection, (Func<TSeed, (bool, TItem, TSeed)> TSeed)> getEnumeratingFunc, T seed, Func<T,T,T> aggregator)
+public static TItem Aggregate<TCollection, TItem, TSeed>(TCollection vals, Func<TCollection, (Func<TSeed, (bool, TItem, TSeed)>, TSeed)> getEnumeratingFunc, T seed, Func<T,T,T> aggregator)
 
 ```
 
-Ugh. I'll spare you the implementation, but it involves a tail recursive algorithm to apply the aggregate step.
+Ugh. I'll spare you the implementation, but it involves using a tail recursive algorithm to apply the aggregate step. Thus the recursion can be optimised to a loop.
 
 This method might look ugly, but it's actually doing exactly the same thing as an IEnumerator would, once decent optimizations are applied. The reason it's so ugly is because we haven't encapsulated the logic, so all of it takes place in this one method.
+
+So how do we encapsulate things from a functional perspective?
+
+Usually we use closures and/or partial application to create a function with certain parameters already set. It's not immediately obvious how to this here though.
+
+One might instead use the original function we had which took a list. One could then create a different Function ToList whose job is to generate a list in the first place.
+
+``` csharp
+
+public static List<TItem> ToList<TCollection, TItem, TSeed>(TCollection vals, Func<TCollection, (Func<TSeed, (bool, TItem, TSeed)>, TSeed)> getEnumeratingFunc)
+
+```
+
+This is slightly better, but still very ugly. Ignoring that for now, if this were Haskell where everything is lazy by default, this will be still be lazy. In C# we might want to make this a Lazy<List<T>>.
+
+However the biggest problem is that we've now lost the generality of our original method, as it now only accepts a List. It is only general in conjunction with another method. So let's make it take a ToList function instead of a list:
+
+``` csharp
+
+public static T Aggregate<S, T>(S vals, Function<S, List<T>> toListFunc, T seed, Func<T,T,T> aggregator)
+{
+    var list = toListFunc(vals)
+    var current = seed;
+    foreach(var val in list)
+         current = aggregator(current, val);
+    return current;
+}
+
+```
+
+Now one could partially apply the ToList function we had earlier to create a toListFunc to pass in to Aggregate.
+
+However the truth is that in most functional languages you're unlikely to see anything like our ridiculously over-engineered ToList function. One of the reasons for this is that there is usually only one sensible way to enumerate any given type. As such it is usually easier to define a single function specifically for each type you would like to enumerate, and define it's behaviour there.
+
+Once you've done that, it's only a small logical step to storing the function with the data type as a method, and once I've done that I might as well make it implement an interface.
+
+### Conclusion
+
+This has been a rather winding journey, and one which didn't have a specific goal in mind.
+
+I think if we were to some up the ideas we've learnt it would be as follows:
+
+1. Both functions and interfaces are used to solve the same problem: how do you solve the general problem as opposed to the specific problem.
+
+2. Functions offer far greater flexibility, and are often more direct. They can be defined locally and at runtime far more easily, and thus offer greater generality than functions.
+
+3. Interfaces offer encapsulation. They neatly cut off complexity from you, so that you don't have to see it. They also offer greater consistency - if there's only one sensible way of doing something, than an interface can guarantee that that way will be used every time.
+
+I think a general guideline when deciding whether to accept an interface or a function is this:
+
+How flexibly will this method be used? Will I be calling it 
+
+
+
