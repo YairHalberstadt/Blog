@@ -192,4 +192,60 @@ public class EnumerableWrapper : IEnumerable<SomeType>
 
 ```
 
+Now let's go down the same path as we took previously, and try to make this wrapper as generic as possible, whilst allowing the method of enumeration to be specified at runtime.
 
+This time I'll skip all the intermediary steps, and go straight to the final outcome
+
+``` csharp
+
+public class EnumerableWrapper<T> : IEnumerable<T>
+{
+     private Func<NonEnumerableClass, IEnumerator<T>> _getEnumerator;
+     private NonEnumerableClass _instance;
+     public Wrapper(NonEnumerableClass instance, Func<NonEnumerableClass, IEnumerator<T>> getEnumerator) 
+     {
+          _instance = instance;
+          _getEnumerator = getEnumerator;
+     }
+     public IEnumerator GetEnumerator() => _getEnumerator(_instance);
+     ...
+}
+
+```
+
+So if we wanted to do this functionally we would do something like this
+
+``` csharp
+
+public static T Aggregate<S, T>(S vals, Func<S, IEnumerator T> getEnumerator, T seed, Func<T,T,T> aggregator)
+{
+    var current = seed;
+    var enumerator = getEnumerator(vals);
+    while(enumerator.MoveNext())
+         current = aggregator(current, enumerator.CurrentValue);
+    return current;
+}
+
+```
+
+Is this now fully functional?
+
+Not really - we are relying on the interface IEnumerator to do all the heavy lifting. We ought to replace that with a function.
+
+So how does IEnumerator work? It contains all the information necessary to generate the next item in the collection.
+
+So we need a function that takes a seed containing the information necessary to get to the next item,  and returns a bool indicating if there are any more items, the next item, and a new seed to get the item after that.
+
+i.e a Func<TSeed, (bool, TItem, TSeed)>
+
+You would then pass in a function into Aggregate that takes the collection and returns this function, as well as the first seed Thus the signature of Aggregate looks like this:
+
+``` csharp
+
+public static TItem Aggregate<TCollection, TItem, TSeed>(TCollection vals, Func<TCollection, (Func<TSeed, (bool, TItem, TSeed)> TSeed)> getEnumeratingFunc, T seed, Func<T,T,T> aggregator)
+
+```
+
+Ugh. I'll spare you the implementation, but it involves a tail recursive algorithm to apply the aggregate step.
+
+This method might look ugly, but it's actually doing exactly the same thing as an IEnumerator would, once decent optimizations are applied. The reason it's so ugly is because we haven't encapsulated the logic, so all of it takes place in this one method.
