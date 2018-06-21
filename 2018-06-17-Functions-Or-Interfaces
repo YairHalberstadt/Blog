@@ -254,7 +254,7 @@ So how do we encapsulate things from a functional perspective?
 
 Usually we use closures and partial application to create a function with certain parameters already set. It's not immediately obvious how to this here though.
 
-One might instead use the original function we had which took a list. One could then create a different Function ToList whose job is to generate a list in the first place.
+One might instead use the original function we had which took a list. One could then create a different Function called ToList whose job is to generate a list in the first place.
 
 ``` csharp
 
@@ -279,13 +279,15 @@ public static T Aggregate<S, T>(S vals, Function<S, List<T>> toListFunc, T seed,
 
 ```
 
-Now one could partially apply the ToList function we had earlier to create a toListFunc to pass in to Aggregate. This is neater though, as it makes no assumptions about how the collection is converted to a list.
+Now one could partially apply the ToList function we had earlier to create a toListFunc to pass in to Aggregate. This is neater than passing in a Func<TCollection, (Func<TSeed, (bool, TItem, TSeed)>, TSeed)> to Aggregate, as it makes no assumptions about how the collection is converted to a list.
 
-However the truth is that in most functional languages you're unlikely to see anything like our ridiculously over-engineered ToList function. One of the reasons for this is that there is usually only one sensible way to enumerate any given type. As such it is usually easier to define a single function specifically for each type you would like to enumerate, and define it's behaviour there.
+However the truth is that in most functional languages you're unlikely to see anything like our ridiculously over-engineered ToList function. One of the reasons for this is that there is usually only one sensible way to enumerate any given type. As such it is usually easier to define a single function specifically for each type you would like to enumerate, and define how a list is generated there.
 
 Once you've done that, it's only a small logical step to storing the function with the data type as a method, and once I've done that I might as well make it implement an interface.
 
-There's one big advantage to using the interface though. Now you can pass in the same collection to any method accepting an IEnumerable without any fanfare. And that includes the whole of linq, plus thousands of other methods on most large codebases.
+(As an aside, the reason IEnumerable doesn't just use a single function called ToList() is because using the more complex GetEnumerator allows for lazy evaluation. ToList() would be extremely non-performant if all you wanted was the first item.)
+
+There's one big advantage to using an interface though. Now you can pass in the same collection to any method accepting an IEnumerable without any fanfare. And that includes the whole of linq, plus thousands of other methods on most large codebases.
 
 Similiarly implementing an IEqualityComparer is often a pain in the neck. It's often simpler to define the necessary functions where you need them. However, once the IEqualityComparer is done, it neatly binds together all the code necessary for equality comparison in one useful class, and can be easily used all over the place.
 
@@ -301,12 +303,18 @@ I think if we were to some up the ideas we've learnt it would be as follows:
 
 Thus accepting functions as a parameter increases the reusability of your method, by allowing it to be manipulated in an infinite number of ways.
 
-3. Interfaces offer encapsulation. They neatly cut off complexity from you, so that you don't have to see it. They also offer greater consistency - if there's only one sensible way of doing something, than an interface can guarantee that that way will be used every time. They can be used easily across your codebase, without any fanfare.
+3. Interfaces offer encapsulation. They neatly cut off complexity from you, so that you don't have to see it. They also offer greater consistency - if there's only one sensible way of doing something, than an interface can make it likely that that way will be used every time. They can be used easily across your codebase, without any fanfare.
 
 Thus interfaces increase the reusability of your classes, by allowing them to be used with many methods.
 
-I think a general guideline when deciding whether a method accepts an interface or a function is this:
+I think the questions to ask when deciding whether a method accepts an interface or a function is this:
 
-Do I place more value on making this method flexible, or on making the classes that use it reusable?
+If I implemented an interface to be passed into this method, how often would I use it again?
 
-Of course that's a drastic over-simplification, but I believe that this blog post is far too long as it is.
+How many different interface implementations might I have to create just to use this method?
+
+How many different functions does this method need to accept, and could that complexity be encapsulated by putting it into an interface?
+
+Of course that's an over-simplification of the decision, but I believe that this blog post is far too long as it is.
+
+So for now, Goodbye!
