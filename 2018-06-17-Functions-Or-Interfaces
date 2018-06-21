@@ -35,7 +35,7 @@ public static T Add<T>(List<T> vals) where  T : IAddable
 {
     T sum = 0;
     foreach(var val in vals)
-        sum += val;
+        sum = sum.Add(val);
     return sum;    
 }
 
@@ -128,7 +128,7 @@ public class RuntimeAdder<T> : IAdder<T>
 
 ```
 
-Now this gives us full runtime control of the functions. It also voids the first problem, since it looks like you need an instantiated interface in order to hold state. However it is just another layer of indirection, when you need to call an instance method to access a Function.
+Now this gives us full runtime control of the functions. It also voids the first problem, since you need an instantiated interface in order to hold state - namely the desired functions. However it adds another layer of indirection, as you now need to call an instance method to access a private Function of the interface, rather than calling the interface directly.
 
 ### Method 2: Functions
 
@@ -168,11 +168,11 @@ public static T Aggregate<T>(List<T> vals, T seed, Func<T,T,T> aggregator)
 
 ```
 
-In fact, if T is a group under aggregator, and seed is the identity element, Aggregate becomes a Monad, one of the core patterns in functional programming, and can be converted into the MapReduce function. It's funny how just thinking about implementing a sum function in C#, bought us all the way deep into the heart of functional programming.
+In fact, if T is a group under aggregator, and seed is the identity element, Aggregate becomes a Monad, one of the core patterns in functional programming, and can be easily scaled using MapReduce. It's funny how just thinking about implementing a sum function in C#, bought us all the way deep into the heart of functional programming.
 
 Now this looks very similar to Linq.Aggregate. The two differences are that this is not an extension method, and that it takes a List not an IEnumerable.
 
-The first is purely cosmetic, but the second is actually quite interesting. IEnumerable is the way C# allows you to write as generic a function on enumeratable things as possible, and it uses an Interface to do so.
+The first is purely cosmetic, but the second is actually quite interesting. IEnumerable is the way C# allows you to write as generic a function on enumeratable things as possible, and it uses an interface to do so.
 
 Of course this has the standard problems with interfaces - it only works if the class happens to implement the interface, and it only gives one possible way to use the interface per class.
 
@@ -217,7 +217,7 @@ So if we wanted to do this functionally we would do something like this
 
 ``` csharp
 
-public static T Aggregate<S, T>(S vals, Func<S, IEnumerator T> getEnumerator, T seed, Func<T,T,T> aggregator)
+public static T Aggregate<S, T>(S vals, Func<S, IEnumerator<T>> getEnumerator, T seed, Func<T,T,T> aggregator)
 {
     var current = seed;
     var enumerator = getEnumerator(vals);
@@ -232,7 +232,7 @@ Is this now fully functional?
 
 Not really - we are relying on the interface IEnumerator to do all the heavy lifting. We ought to replace that with a function.
 
-So how does IEnumerator work? It contains all the information necessary to generate the next item in the collection.
+So how does IEnumerator work? It contains all the information necessary to generate the next item in the collection, plus a method which retrieves that next item and updates the information
 
 So we need a function that takes a seed containing the information necessary to get to the next item,  and returns a bool indicating if there are any more items, the next item, and a new seed to get the item after that.
 
@@ -252,7 +252,7 @@ This method might look ugly, but it's actually doing exactly the same thing as a
 
 So how do we encapsulate things from a functional perspective?
 
-Usually we use closures and/or partial application to create a function with certain parameters already set. It's not immediately obvious how to this here though.
+Usually we use closures and partial application to create a function with certain parameters already set. It's not immediately obvious how to this here though.
 
 One might instead use the original function we had which took a list. One could then create a different Function ToList whose job is to generate a list in the first place.
 
@@ -262,7 +262,7 @@ public static List<TItem> ToList<TCollection, TItem, TSeed>(TCollection vals, Fu
 
 ```
 
-This is slightly better, but still very ugly. Ignoring that for now, if this were Haskell where everything is lazy by default, this will be still be lazy. In C# we might want to make this a Lazy<List<T>>.
+This is slightly better, but still very ugly. Ignoring that for now, if this were Haskell where everything is lazy by default, this will be still be lazy. In C# we might want to make this return a Lazy<List<T>> instead.
 
 However the biggest problem is that we've now lost the generality of our original method, as it now only accepts a List. It is only general in conjunction with another method. So let's make it take a ToList function instead of a list:
 
@@ -279,11 +279,15 @@ public static T Aggregate<S, T>(S vals, Function<S, List<T>> toListFunc, T seed,
 
 ```
 
-Now one could partially apply the ToList function we had earlier to create a toListFunc to pass in to Aggregate.
+Now one could partially apply the ToList function we had earlier to create a toListFunc to pass in to Aggregate. This is neater though, as it makes no assumptions about how the collection is converted to a list.
 
 However the truth is that in most functional languages you're unlikely to see anything like our ridiculously over-engineered ToList function. One of the reasons for this is that there is usually only one sensible way to enumerate any given type. As such it is usually easier to define a single function specifically for each type you would like to enumerate, and define it's behaviour there.
 
 Once you've done that, it's only a small logical step to storing the function with the data type as a method, and once I've done that I might as well make it implement an interface.
+
+There's one big advantage to using the interface though. Now you can pass in the same collection to any method accepting an IEnumerable without any fanfare. And that includes the whole of linq, plus thousands of other methods on most large codebases.
+
+Similiarly implementing an IEqualityComparer is often a pain in the neck. It's often simpler to define the necessary functions where you need them. However, once the IEqualityComparer is done, it neatly binds together all the code necessary for equality comparison in one useful class, and can be easily used all over the place.
 
 ### Conclusion
 
@@ -295,11 +299,14 @@ I think if we were to some up the ideas we've learnt it would be as follows:
 
 2. Functions offer far greater flexibility, and are often more direct. They can be defined locally and at runtime far more easily, and thus offer greater generality than functions.
 
-3. Interfaces offer encapsulation. They neatly cut off complexity from you, so that you don't have to see it. They also offer greater consistency - if there's only one sensible way of doing something, than an interface can guarantee that that way will be used every time.
+Thus accepting functions as a parameter increases the reusability of your method, by allowing it to be manipulated in an infinite number of ways.
 
-I think a general guideline when deciding whether to accept an interface or a function is this:
+3. Interfaces offer encapsulation. They neatly cut off complexity from you, so that you don't have to see it. They also offer greater consistency - if there's only one sensible way of doing something, than an interface can guarantee that that way will be used every time. They can be used easily across your codebase, without any fanfare.
 
-How flexibly will this method be used? Will I be calling it 
+Thus interfaces increase the reusability of your classes, by allowing them to be used with many methods.
 
+I think a general guideline when deciding whether a method accepts an interface or a function is this:
 
+Do I place more value on making this method flexible, or on making the classes that use it reusable?
 
+Of course that's a drastic over-simplification, but I believe that this blog post is far too long as it is.
