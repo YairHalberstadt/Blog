@@ -3,7 +3,7 @@ title: Mitigating the costs of abstraction part 1: When To, and How To.
 ---
 ## Mitigating the costs of abstraction part 1: When To, and How To.
 
-Us C# programmers love our abstractions, don't we! We use interfaces, abstract classes, linq, and lambda functions all over the place. And we rarely bother to think about their performance costs.
+Us C# programmers love our abstractions, don't we! We use properties, interfaces, abstract classes, linq, and lambda functions all over the place. And we rarely bother to think about their performance costs.
 
 And rightly so! 
 
@@ -42,3 +42,13 @@ However even if you could optimise the wrapper logic to zero, it would still be 
 As such you're much better off spending your time optimising the efficiency of the generated SQL query than spending it optimising the speed of the conversion, especially as these two aims are often at odds.
 
 As ever, profile, and focus on the bottlenecks.
+
+#### 5. How costly is optimising?
+
+Optimising always has costs as well as benefits. At the very least it takes up time, which might well be better used elsewhere. 
+
+It also is likely to adversely effect readability, usability, extensibility, type safety, complexity and organisation of the codebase. Optimisations which minimise these costs are, all other things being equal, to be preferred to optimisations which are more costly.
+
+Speaking of which, lets discuss the costs of optimisations, and the types of optimisations which minimise them.
+
+### Costs
