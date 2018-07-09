@@ -49,6 +49,14 @@ Optimising always has costs as well as benefits. At the very least it takes up t
 
 It also is likely to adversely effect readability, usability, extensibility, type safety, complexity and organisation of the codebase. Optimisations which minimise these costs are, all other things being equal, to be preferred to optimisations which are more costly.
 
-Speaking of which, lets discuss the costs of optimisations, and the types of optimisations which minimise them.
+In general optimisations which only change the internal implementation of a method have the lowest costs.
 
-### Costs
+Those that change the internal API of your classes will often have slightly higher costs.
+
+Those that force you to rearrange the internal structure of your code are much more likely to be problematic.
+
+Those that force you to change the public API or even worse, the public structure of your codebase are dangerous. They will force you to break backwards compatibility, and are highly likely to lead to a reduction in usability, extensibility, or complexity of the codebase. They should not be undertaken without serious thought, and the question must always be asked: "Is this optimisation really worth it?".
+
+### To Wrap Up
+
+Now that I've waxed lyrical on my opinions about optimisations, it's time to get to the nitty gritty. Over the next few posts I intend to give examples of cases where abstractions led to a decrease in performance, and how I attempted to mitigate them.
