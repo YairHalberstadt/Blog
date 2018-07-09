@@ -1,5 +1,5 @@
 ---
-title: Mitigating the costs of abstraction part 1: When To, and How To.
+title: Mitigating the costs of abstraction part 1. When To, and How To.
 ---
 ## Mitigating the costs of abstraction part 1: When To, and How To.
 
