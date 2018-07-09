@@ -1,7 +1,7 @@
 ---
 title: Mitigating the costs of abstraction part 1. When To, and How To.
 ---
-## Mitigating the costs of abstraction part 1: When To, and How To.
+## Mitigating the costs of abstraction part 1. When To, and How To.
 
 Us C# programmers love our abstractions, don't we! We use properties, interfaces, abstract classes, linq, and lambda functions all over the place. And we rarely bother to think about their performance costs.
 
