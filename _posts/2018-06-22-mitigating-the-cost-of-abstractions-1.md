@@ -9,11 +9,11 @@ And rightly so!
 
 The cost of an abstraction will almost never change the Big O complexity of your algorithm. It's also rarely that much more expensive either. Whereas focusing on choosing the right algorithm can often lead to a huge reduction in time complexity. Just using a dictionary instead of a list can in some cases turn an O(n) algorithm into an 0(1) algorithm. And realising one can short-circuit a method under most circumstances might increase the average speed of an expensive piece of code a thousandfold!
 
-However abstraction do have a cost, and in the worst of cases it can make code as much as 10 times slower, even using an identical algorithm.
+However abstractions do have a cost, and in the worst of cases it can make code as much as 10 times slower, even using an identical algorithm.
 
 It would be dishonest to vociferously point out that premature optimization is the root of all evil without remembering how the quote continues:
 
-" I believe that premature optimization is the root of all evil in maybe 97% of cases. **However we should not pass up our opportunities in the 3 percent of critical code.** " - Donald Knuth
+"Programmers waste enormous amounts of time thinking about, or worrying about, the speed of noncritical parts of their programs, and these attempts at efficiency actually have a strong negative impact when debugging and maintenance are considered. We should forget about small efficiencies, say about 97% of the time: premature optimization is the root of all evil. **Yet we should not pass up our opportunities in that critical 3%.**" - Donald Knuth
 
 So when is micro-optimisation of the sort that would improve the performance of abstractions worth it?
 
