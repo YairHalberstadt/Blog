@@ -1,3 +1,9 @@
+---
+Title: Mitigating The Costs Of Abstractions. Using Functions for Simple Arithmetic
+---
+
+## Mitigating The Costs Of Abstractions. Using Functions for Simple Arithmetic
+
 Consider the following 5 implementations of a simple Add Function:
 
 ``` csharp
