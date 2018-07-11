@@ -72,6 +72,9 @@ I can guess but I can't know. Like always I'll have to profile. I've used Jon Sk
 
 Here is the code I used:
 
+<details>
+  <summary>Click to view code</summary>
+	
 ``` csharp
 
 using System;
@@ -204,10 +207,12 @@ namespace performanceTests
 }
 
 ```
-
+</details>
+<br/>
 I ran this in release mode on an x86 architecture with the -runtwice commandline parameter set. That way the jitter had a chance to work its magic. I did so a number of times, varying the order in which each function ran, and the results were consistent throughout.
 
 Here are my results:
+
 
 ```
 Run #1
