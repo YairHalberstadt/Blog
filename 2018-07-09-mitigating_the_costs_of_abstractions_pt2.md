@@ -266,7 +266,7 @@ public class IntVector : IVector<int>
 {
     private int[] _items;
     
-   \\ constructor and other code goes here
+   // constructor and other code goes here
 
     public IntVector Add(IVector<int> addend)
     {
