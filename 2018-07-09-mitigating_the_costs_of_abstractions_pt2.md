@@ -238,8 +238,57 @@ This is because calling an interface method uses a virtual method call. This inv
 
 Usually the overhead of a virtual method is irrelevant compared to the cost of the method itself, but for such a small method, the cost is huge.
 
+What's most interesting though is that addclass where we call a non-virtual method to add, suffers no performance costs compared to adding directly. In fact it was slightly faster on every repeat I did (I have no idea why this is. Maybe it's just a fluke?). 
+
+This is because the Jitter inlines the function call, so effectively addclass and addstandard run the same code.
+
+With virtual function calls though, the Jitter isn't yet clever enough to inline the function call, as the function changes depending on the type that's passed in.
+
+Thus using a virtual function as opposed to a non - virtual one degrades our performance by 4 times.
+
+Virtual functions are beautiful things, but in performance critical code, weigh up every single one before you use it, and always seal functions of they don't need to be further inherited.
+
 ### The Problem
 
-So why is this relevant?
+So why would I every provide an add function through a virtual method in the first place?
+
+I'm currently implementing a linear algebra library.
+
+One of the core constructs in linear algebra is a vector. A vector is essentially a list of items. Each item must have addition, subtraction, multiplication and a couple of other things defined for it.
+
+Adding one vector to another involves returning a new vector with each of its values the sum of the two values in the vectors being added.
+
+If that's not clear enough, here is a simple implementation of Vector<int>.Add()
+
+``` csharp
+
+public class IntVector : IVector<int>
+{
+    private int[] _items;
+    
+   \\ constructor and other code goes here
+
+    public IntVector Add(IVector<int> addend)
+    {
+    var result = _items.Zip(addend._items, (a,b) => a+b).ToArray();
+
+    return new IntVector(result);
+    }
+}
+
+
+```
+
+Obviously that could be improved significantly by using a for loop instead of Innumerable.Zip() but I'm not focusing on that for now.
+
+This looks all fine and dandy, but that only works for an int. I want to define a Vector<T> that will work for all values of T.
+
+I could do this by injecting a function or interface into    the constructor, and use that to define addition on T. But then I could instantiate two instances of Vector<T> which have different definitions for Add(). What would happen if I added them?
+
+Really I want the definition of addition to be part of the type signature.
+
+To do this I need to do the following:
+
+
 
 
