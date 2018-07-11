@@ -209,19 +209,20 @@ I ran this in release mode on an x86 architecture with the -runtwice commandline
 
 Here are my results:
 
->Run #1
->  AddStandard          00:00:00.5807577
->  AddFunc              00:00:01.8229438
->  AddClass             00:00:00.5325112
->  AddInterface         00:00:02.0599220
->  AddGeneric           00:00:02.0681714
->Run #2
->  AddStandard          00:00:00.5684420
->  AddFunc              00:00:01.8062895
->  AddClass             00:00:00.5387222
->  AddInterface         00:00:02.0576619
->  AddGeneric           00:00:02.0390805
-
+```
+Run #1
+  AddStandard          00:00:00.5807577
+  AddFunc              00:00:01.8229438
+  AddClass             00:00:00.5325112
+  AddInterface         00:00:02.0599220
+  AddGeneric           00:00:02.0681714
+Run #2
+  AddStandard          00:00:00.5684420
+  AddFunc              00:00:01.8062895
+  AddClass             00:00:00.5387222
+  AddInterface         00:00:02.0576619
+  AddGeneric           00:00:02.0390805
+```
 It's not surprising that the generic add had similar performance to the interface add - once the instance of TAdder was created, the rest of the code is identical, and so the performance should be pretty much equivalent, given the loop ran for 1,000,000,000 iterations.
 
 They were both slightly slower than the Func Add. Although a lot of work takes place during delegate instantiation, once a delegate is instantiated the first time it's called, the result is cached and reused on any future calls. This seems to be enough to improve it's performance beyond that of a virtual function call in large loops, at least on the architecture I was using. Of course we can't know exactly why that is without seeing the machine code the jitter output.
