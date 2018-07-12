@@ -266,11 +266,11 @@ public class IntVector : IVector<int>
 {
     private int[] _items;
     
-   // constructor and other code goes here
+   // constructor and other code goes here. IVector implements IEnumerable.
 
-    public IntVector Add(IVector<int> addend)
+    public IVector<int> Add(IVector<int> addend)
     {
-    var result = _items.Zip(addend._items, (a,b) => a+b).ToArray();
+    var result = this.Zip(addend, (a,b) => a+b).ToArray();
 
     return new IntVector(result);
     }
@@ -279,7 +279,7 @@ public class IntVector : IVector<int>
 
 ```
 
-Obviously that could be improved significantly by using a for loop instead of Innumerable.Zip() but I'm not focusing on that for now.
+Obviously that could be improved significantly by using a for loop instead of IEnumerable.Zip() but I'm not focusing on that for now.
 
 This looks all fine and dandy, but that only works for an int. I want to define a Vector<T> that will work for all values of T.
 
@@ -289,6 +289,35 @@ Really I want the definition of addition to be part of the type signature.
 
 To do this I need to do the following:
 
+``` csharp
+
+public class Vector<TDataType, TAdder>: IVector<TDataType, TAdder> where TAdder : IAdder<TDataType>, new()
+{
+    // Constructor, items, properties, accessors etc. go here.
+
+    public IVector<TDataType, TAdder> Add(IVector<TDataType, TAdder> addend)
+    {
+        var result = new TDataType[Length];
+        var adder = new TAdder();
+        for(int i = 0; I < Length; i++)
+        {
+            result[i] = adder.Add(this[i], addend[i]);
+        }
+        return new Vector<TDataType, TAdder>(result);
+    }
+}
+
+```
+
+Now this is overengineered, but functional. It works. But we are now calling a virtual method to do addition, with all the overhead that entails.
+
+So we are stuck between a rock and a hard place: either we make Vector slow, or we have to define it separately for each DataType.
+
+Code generation could help with the second problem, but that's not a neat solution.
+
+In the end the decision I made was that we couldn't compromise either. It is unacceptable for a vector library to be slow on basic types, but at the same time, it would be ugly if it couldn't extend to other types. Besides fast vector libraries already exists for such things as doubles. One of the unique selling points of my library is it's extensibility, and it's fealty to mathematical definitions and concepts. As such I could not justify reducing a vector to something that just acts on numbers.
+
+The trick is to implement the extensible version first. Then define IntVector as follows:
 
 
 
