@@ -270,9 +270,9 @@ public class IntVector : IVector<int>
 
     public IVector<int> Add(IVector<int> addend)
     {
-    var result = this.Zip(addend, (a,b) => a+b).ToArray();
+       var result = this.Zip(addend, (a,b) => a + b).ToArray();
 
-    return new IntVector(result);
+       return new IntVector(result);
     }
 }
 
@@ -283,7 +283,7 @@ Obviously that could be improved significantly by using a for loop instead of IE
 
 This looks all fine and dandy, but that only works for an int. I want to define a Vector<T> that will work for all values of T.
 
-I could do this by injecting a function or interface into    the constructor, and use that to define addition on T. But then I could instantiate two instances of Vector<T> which have different definitions for Add(). What would happen if I added them?
+I could do this by injecting a function or interface into the constructor, and use that to define addition on T. But then I could instantiate two instances of Vector<T> which have different definitions for Add(). What would happen if I added them?
 
 Really I want the definition of addition to be part of the type signature.
 
@@ -315,7 +315,9 @@ So we are stuck between a rock and a hard place: either we make Vector slow, or 
 
 Code generation could help with the second problem, but that's not a neat solution.
 
-In the end the decision I made was that we couldn't compromise either. It is unacceptable for a vector library to be slow on basic types, but at the same time, it would be ugly if it couldn't extend to other types. Besides fast vector libraries already exists for such things as doubles. One of the unique selling points of my library is it's extensibility, and it's fealty to mathematical definitions and concepts. As such I could not justify reducing a vector to something that just acts on numbers.
+In the end the decision I made was that we couldn't compromise either. It is unacceptable for a vector library to be slow on basic types, but at the same time, it would be ugly if it couldn't extend to other types. Besides fast vector libraries already exists for such things as doubles. One of the unique selling points of my library is it's extensibility, and it's fealty to mathematical definitions and concepts. As such I could not justify reducing a vector to something that just acts on numbers. To do that I used a little trick...
+
+### The Solution: Structs to the rescue!!
 
 The trick is actually extremely simple but requires a little in-depth knowledge about c#:
 
@@ -340,13 +342,13 @@ Wow! AddGeneric now performs even faster than the normal add function!
 
 Why is this?
 
-I can't be sure why it's faster, but I do know why it's as fast. Part of the guarantee of generics in C# is that they will not cause boxing of structs. To avoid this, a new version of the generic type is instantiated for each struct type that's used.
+I can't be sure why it's faster, but I do know why it's as fast. Part of the guarantee of generics in C# is that they will not cause boxing of structs. To avoid this, a new version of the generic type cope is created for each generic type that's instantiated with a struct type as it's generic type parameter.
 
-As a result the Jitter knows that `Add<Adder>` is only going to be used with an Adder, and so can aggressively optimise the function by inlining Adder.Add().
+As a result the code for `Add<Adder>` exists seperately to the code for `Add<IAdder>`. Since the Jitter knows that `Add<Adder>` is only going to be used with an Adder, it can aggressively optimise the function by inlining Adder.Add().
 
 So all we have to do is implement our adders as structs and we gain the same performance as a non-generic library!
 
-Of course this comes at a cost.  Instantiating a new generic type for each struct used comes with a significant memory overhead, and can also effect things like cache performance - that _might_ be why both AddInterface and AddFunc are now slower than before. But seeing as int, double, complex etc. are all structs anyway, this would occur whatever happened. The extra overhead would only occur if you instantiated Vector on a non struct datatype, or used more than one adder with an struct datatype. Then you'll have to decide whether to use a class or a struct, but even then in 99% of case I imagine a struct is appropriate - as ever profile and see what works best.
+Of course this comes at a cost.  Instantiating a new generic type for each struct used comes with a significant memory overhead, and can also effect things like cache performance - that _might_ be why both AddInterface and AddFunc are now slower than before. But seeing as int, double, complex etc. are all structs anyway, this would occur when we instantiated Vector<int> whatever happened. The extra overhead would only occur if you instantiated Vector on a non struct datatype, or used more than one adder with a struct datatype. Then you'll have to decide whether to use a class or a struct for the adder, but even then in 99% of case I imagine a struct is appropriate - as ever profile and see what works best.
 
 
 
