@@ -71,9 +71,6 @@ How does their performance compare to each other?
 I can guess but I can't know. Like always I'll have to profile. I've used Jon Skeets simple benchmarking framework (available at http://jonskeet.uk/csharp/benchmark.html) to check. 
 
 Here is the code I used:
-
-<details>
-  <summary>Click to view code</summary>
 	
 ``` csharp
 
@@ -207,7 +204,6 @@ namespace performanceTests
 }
 
 ```
-</details>
 
 I ran this in release mode on an x86 architecture with the -runtwice commandline parameter set. That way the jitter had a chance to work its magic. I did so a number of times, varying the order in which each function ran, and the results were consistent throughout.
 
