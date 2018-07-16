@@ -317,7 +317,22 @@ Code generation could help with the second problem, but that's not a neat soluti
 
 In the end the decision I made was that we couldn't compromise either. It is unacceptable for a vector library to be slow on basic types, but at the same time, it would be ugly if it couldn't extend to other types. Besides fast vector libraries already exists for such things as doubles. One of the unique selling points of my library is it's extensibility, and it's fealty to mathematical definitions and concepts. As such I could not justify reducing a vector to something that just acts on numbers.
 
-The trick is to implement the extensible version first. Then define IntVector as follows:
+The trick is actually extremely simple but requires a little in-depth knowledge about c#:
+
+What happens if we replace Adder with a struct, instead of an interface, and redo our performance tests?
+
+
+Wow! Generic Add now performs even faster than the normal add function!
+
+Why is this?
+
+I can't be sure why it's faster, but I do know why it's as fast. Part of the guarantee of generics in C# is that they will not cause boxing of structs. To avoid this, a new version of the generic type is instantiated for each struct type that's used.
+
+As a result the Jitter knows that Add<Adder> is only going to be used with an Adder, and so can aggressively optimise the function by inlining Adder.Add().
+
+So all we have to do is implement our adders as structs and we gain the same performance as a non-generic library!
+
+Of course this comes at a cost. Instantiating a new generic type for each struct used comes with a significant memory overhead, and can also effect things like cache performance. But seeing as int, double, complex etc. are all structs anyway, this would occur whatever happened. The extra overhead would only occur if you instantiated Vector on non struct types. Then you'll have to decide whether to use a class or a struct, but even then in 99% of case I imagine a struct is appropriate.
 
 
 
