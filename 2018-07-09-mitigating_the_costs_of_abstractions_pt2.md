@@ -342,7 +342,7 @@ Why is this?
 
 I can't be sure why it's faster, but I do know why it's as fast. Part of the guarantee of generics in C# is that they will not cause boxing of structs. To avoid this, a new version of the generic type is instantiated for each struct type that's used.
 
-As a result the Jitter knows that Add<Adder> is only going to be used with an Adder, and so can aggressively optimise the function by inlining Adder.Add().
+As a result the Jitter knows that `Add<Adder>` is only going to be used with an Adder, and so can aggressively optimise the function by inlining Adder.Add().
 
 So all we have to do is implement our adders as structs and we gain the same performance as a non-generic library!
 
