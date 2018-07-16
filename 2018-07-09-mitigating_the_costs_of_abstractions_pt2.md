@@ -321,8 +321,22 @@ The trick is actually extremely simple but requires a little in-depth knowledge 
 
 What happens if we replace Adder with a struct, instead of an interface, and redo our performance tests?
 
+```
+Run #1
+  AddStandard          00:00:00.5878752
+  AddFunc              00:00:02.0918007
+  AddClass             00:00:00.4395688
+  AddInterface         00:00:02.8117917
+  AddGeneric           00:00:00.4299338
+Run #2
+  AddStandard          00:00:00.5643042
+  AddFunc              00:00:02.1003003
+  AddClass             00:00:00.4203489
+  AddInterface         00:00:02.7876626
+  AddGeneric           00:00:00.4175348
+```
 
-Wow! Generic Add now performs even faster than the normal add function!
+Wow! AddGeneric now performs even faster than the normal add function!
 
 Why is this?
 
@@ -332,7 +346,7 @@ As a result the Jitter knows that Add<Adder> is only going to be used with an Ad
 
 So all we have to do is implement our adders as structs and we gain the same performance as a non-generic library!
 
-Of course this comes at a cost. Instantiating a new generic type for each struct used comes with a significant memory overhead, and can also effect things like cache performance. But seeing as int, double, complex etc. are all structs anyway, this would occur whatever happened. The extra overhead would only occur if you instantiated Vector on non struct types. Then you'll have to decide whether to use a class or a struct, but even then in 99% of case I imagine a struct is appropriate.
+Of course this comes at a cost.  Instantiating a new generic type for each struct used comes with a significant memory overhead, and can also effect things like cache performance - that _might_ be why both AddInterface and AddFunc are now slower than before. But seeing as int, double, complex etc. are all structs anyway, this would occur whatever happened. The extra overhead would only occur if you instantiated Vector on a non struct datatype, or used more than one adder with an struct datatype. Then you'll have to decide whether to use a class or a struct, but even then in 99% of case I imagine a struct is appropriate - as ever profile and see what works best.
 
 
 
