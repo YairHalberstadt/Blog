@@ -1,8 +1,8 @@
 ---
-Title: Mitigating the Cost of Abstractions. Using Immutable Arrays
+Title: Mitigating the Costs of Abstractions. Using Immutable Arrays
 ---
 
-### Mitigating the Cost of Abstractions. Using Immutable Arrays
+### Mitigating the Costs of Abstractions. Using Immutable Arrays
 
 I am currently working on a linear algebra library.
 
@@ -131,7 +131,7 @@ We just create a utility method:
 
 public static ImmutableArray<T> UnsafeMakeImmutable<T>(this T[] array)
 {
-		 return Unsafe.As<T[], ImmutableArray<T>>(ref array);
+	return Unsafe.As<T[], ImmutableArray<T>>(ref array);
 }
 
 ```
