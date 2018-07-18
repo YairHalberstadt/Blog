@@ -53,7 +53,7 @@ public class Matrix : IMatrix
 
     public int this[row, column] => _items[row * NumColumns + column];
 
-    public Matrix Add(IMatrix addend)
+    public IMatrix Add(IMatrix addend)
     {
         var result = new int[NumRows*NumColumns];
         for(int i = 0, pointer = 0; i < NumRows; i++)
@@ -87,7 +87,7 @@ public class Matrix : IMatrix
 
     public int this[row, column] => Items[row * NumColumns + column];
 
-    public Matrix Add(IMatrix addend)
+    public IMatrix Add(IMatrix addend)
     {
         var result = new int[NumRows*NumColumns];
         var addendItems = addend.Items;
@@ -138,4 +138,30 @@ public static ImmutableArray<T> UnsafeMakeImmutable<T>(this T[] array)
 
 And call it on our array to magically convert it to an ImmutableArray.
 
+Of course clients can do exactly the same thing to pass in an ImmutableArray to our constructor, but once they're explicitly calling something called "Unsafe" they are entirely responsible if things don't work as expected.
+
 #### Part 2: fixing the architecture.
+
+To get this to work we've had to introduce a property called Items which returns an ImmutableArray to the IMatrix interface.
+
+This is a code smell - that an ImmutableArray is used to store the values is an implementation detail, and an interface should not contain implementation details.
+
+Indeed it soon turns out that this is a bad idea. Consider for example a diagonal matrix. This is a square matrix only containing values along it's diagonal - all other values are zero. As a result it only needs to store those values, leading to significant memory saving.
+
+By forcing it to implement the Items property, it now needs to either store an ImmutableArray of the entire   matrix, or generate it each time the property is called, leading to significant memory or performance overhead.
+
+So we must remove the Items Property from IMatrix.
+
+We could have a new interface IAccessableMatrix, or something like that with the Items property, and add a new overload to Matrix.Add which accepts an IAccessableMatrix.
+
+However, in the end I decided that even this isn't necessary. This property will only exist on a matrix if it has an implementation where every value is stored in a single ImmutableArray. At this point it's hard to see what functionality it provides that can't be had by deriving from Matrix. Even if it does, it's unlikely you would be mixing and matching the two types that often - you would presumably either work mainly with one or the other. As such I felt that the interface was overkill.
+
+Instead I decided that each implementation of IMatrix should be optimised for the types of Matrix it  is most likely to be used with. Other than that it should make no assumptions about the underlying implementation of the IMatrix.
+
+As such Matrix.Add has a specific overload accepting another Matrix as a parameter so it can use the Items property. It also does a type check when an IMatrix is passed in to see if it should use the Matrix overload instead.
+
+It could do similar things for a diagonal matrix, or any other type of Matrix.
+
+This provides another advantage. As discussed in my first post, C# does not support covariant return types. As such Matrix.Add(IMatrix addend) must return an IMatrix instead of a Matrix, since IMatrix.Add returns an IMatrix.
+
+However Matrix.Add(Matrix addend) is not an implementation of IMatrix.Add, so can return whatever it wants - in this case a Matrix. This is useful as Matrix has some functionality - like Items - that IMatrix doesn't. It also means that we don't have to use virtual dispatch when calling a method on Matrix, like we would if we were calling it on an IMatrix. This can significantly increase performance, not least since short methods can now be inlined by the Jitter.
