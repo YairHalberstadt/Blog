@@ -131,7 +131,7 @@ We just create a utility method:
 
 public static ImmutableArray<T> UnsafeMakeImmutable<T>(this T[] array)
 {
-	return Unsafe.As<T[], ImmutableArray<T>>(ref array);
+    return Unsafe.As<T[], ImmutableArray<T>>(ref array);
 }
 
 ```
