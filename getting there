@@ -1,0 +1,144 @@
+using System;
+using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.Text;
+using System.Runtime.CompilerServices;
+
+
+namespace performanceTests
+{
+	class function_tests
+	{
+		private static int[] _values = new int[1000000000];
+
+		private static int _result;
+
+		private static int _length;
+
+		private static int Length => _values.Length;
+
+		public static void Init(string[] args)
+		{
+			for (int i = 0; i < _values.Length; i++)
+			{
+				_values[i] = i;
+			}
+			_length = _values.Length;
+		}
+
+		public static void Check()
+		{
+			Console.WriteLine(_result);
+		}
+
+		[Benchmark]
+		public static void AddProperty()
+		{
+			var result = 0;
+			for (int i = 0; i < Length; i++)
+			{
+				result += _values[i];
+			}
+
+			_result = result;
+		}
+
+		[Benchmark]
+		public static void AddField()
+		{
+			var result = 0;
+			for (int i = 0; i < _length; i++)
+			{
+				result += _values[i];
+			}
+
+			_result = result;
+		}
+
+		[Benchmark]
+		public static void AddNormal()
+		{
+			var result = 0;
+			for (int i = 0; i < _values.Length; i++)
+			{
+				result += _values[i];
+			}
+
+			_result = result;
+		}
+
+		[Benchmark]
+		public static void AddCache()
+		{
+			var result = 0;
+			var length = _values.Length;
+			for (int i = 0; i < length; i++)
+			{
+				result += _values[i];
+			}
+
+			_result = result;
+		}
+	}
+}
+
+Run #1
+  AddProperty          00:00:00.5335864
+  AddField             00:00:00.6083947
+  AddNormal            00:00:00.5314011
+  AddCache             00:00:00.5779477
+Run #2
+-1243309312
+  AddProperty          00:00:00.5333801
+  AddField             00:00:00.6139761
+  AddNormal            00:00:00.5312850
+  AddCache             00:00:00.5739332
+  
+Run #1
+  AddProperty          00:00:00.9148230
+  AddField             00:00:00.7792866
+  AddNormal            00:00:00.9058388
+  AddCache             00:00:00.6283438
+Run #2
+  AddProperty          00:00:00.8993353
+  AddField             00:00:00.7766070
+  AddNormal            00:00:00.9050327
+  AddCache             00:00:00.6279809
+  
+  Run #1
+-1243309312
+  AddProperty          00:00:01.8455796
+-1243309312
+  AddField             00:00:01.5908044
+-1243309312
+  AddNormal            00:00:01.5638944
+-1243309312
+  AddCache             00:00:01.5416786
+Run #2
+-1243309312
+  AddProperty          00:00:01.8052111
+-1243309312
+  AddField             00:00:01.5521521
+-1243309312
+  AddNormal            00:00:01.5575613
+-1243309312
+  AddCache             00:00:01.5555272
+  
+  Run #1
+-1243309312
+  AddField             00:00:01.8848794
+-1243309312
+  AddNormal            00:00:01.6330310
+-1243309312
+  AddProperty          00:00:01.5610518
+-1243309312
+  AddCache             00:00:01.5592312
+Run #2
+-1243309312
+  AddField             00:00:01.8052472
+-1243309312
+  AddNormal            00:00:01.5768331
+-1243309312
+  AddProperty          00:00:01.5634327
+-1243309312
+  AddCache             00:00:01.5566960
