@@ -101,7 +101,7 @@ public class Matrix : IMatrix
 
 ```
 
-This also provides another advantage. Previously we would have used a constructor accepting an array of items to create our matrix. As the client may change the array after they've passed it to us, the constructor forced to copy the array in order to guarantee immutability. This reduces the performance of our add function, as we copy the array even though we know that it doesn't change.
+This also provides another advantage. Previously we would have used a constructor accepting an array of items to create our matrix. As the client may change the array after they've passed it to us, the constructor is forced to copy the array in order to guarantee immutability. This reduces the performance of our add function, as we copy the array even though we know that it doesn't change.
 
 Now we can pass an ImmutableArray to our matrix, and the relevant constructor knows that there is no need to copy.
 
@@ -152,7 +152,7 @@ By forcing it to implement the Items property, it now needs to either store an I
 
 So we must remove the Items Property from IMatrix.
 
-We could have a new interface IAccessableMatrix, or something like that with the Items property, and add a new overload to Matrix.Add which accepts an IAccessableMatrix.
+We could have a new interface called IAccessableMatrix or something like that, with the Items property, and add a new overload to Matrix.Add which accepts an IAccessableMatrix.
 
 However, in the end I decided that even this isn't necessary. This property will only exist on a matrix if it has an implementation where every value is stored in a single ImmutableArray. At this point it's hard to see what functionality it provides that can't be had by deriving from Matrix. Even if it does, it's unlikely you would be mixing and matching the two types that often - you would presumably either work mainly with one or the other. As such I felt that the interface was overkill.
 
