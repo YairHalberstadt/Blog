@@ -1,13 +1,105 @@
+---
+Title: Mitigating the Cost of Abstractions pt4. Benchmarking Caches in loops
+---
+
+### Mitigating the Cost of Abstractions pt4. Benchmarking Caches in loops
+
+Consider the 4 following Add functions:
+
+``` csharp
+
+    private static int[] _values;
+
+		private static int _length;
+
+		private static int Length => _values.Length;
+
+		public static void Run( int[] values)
+		{
+			_values = values;
+			_length = _values.Length;
+      AddProperty();
+      AddField();
+      AddNormal();
+      AddCache();
+		}
+    
+		public static void AddProperty()
+		{
+			var result = 0;
+			for (int i = 0; i < Length; i++)
+			{
+				result += _values[i];
+			}
+
+			return result;
+		}
+
+		public static int AddField()
+		{
+			var result = 0;
+			for (int i = 0; i < _length; i++)
+			{
+				result += _values[i];
+			}
+
+			return result;
+		}
+
+		public static int AddNormal()
+		{
+			var result = 0;
+			for (int i = 0; i < _values.Length; i++)
+			{
+				result += _values[i];
+			}
+
+			return result;
+		}
+
+		public static int AddCache()
+		{
+			var result = 0;
+			var length = _values.Length;
+			for (int i = 0; i < length; i++)
+			{
+				result += _values[i];
+			}
+
+			return result;
+		}
+
+```
+
+All 4 use a a loop with the same code in the loop to add the array. Where they differ is what they check the loop against.
+
+The first check the index against a property which gets the length of the array. The second checks against a field where we've cached the length. The third checks directly against the length of the array. The fourth checks against a local variable where we've cached the length.
+
+Which will be most performant?
+
+On the one hand those where we cache the result avoid calling array.Length so often. Since array.Length is not in fact a simple property, but actually calls into unmanaged code, this might improve performance.
+
+On the other hand maybe the compiler/jitter is clever enough to do the caching for us. And maybe checking against the length of the array directly allows the Jitter to skip the bounds check on the array.
+
+In short we can't know without benchmarking. We as it happens, is exactly what I've done.
+
+Like last time I've used Jon Skeets benchmarking framework, in release mode, on an x86 architecture, with the -runtwice command line parameter.
+
+All results were consistent across multiple repeats, and across varying sizes of the array used.
+
+Here is the code I used.
+
+``` csharp
+
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Text;
 using System.Runtime.CompilerServices;
 
-
 namespace performanceTests
 {
-	class function_tests
+	class LoopTests
 	{
 		private static int[] _values = new int[1000000000];
 
@@ -82,18 +174,31 @@ namespace performanceTests
 	}
 }
 
+```
+
+And here are the results.
+
+```
+
 Run #1
   AddProperty          00:00:00.5335864
   AddField             00:00:00.6083947
   AddNormal            00:00:00.5314011
   AddCache             00:00:00.5779477
 Run #2
--1243309312
   AddProperty          00:00:00.5333801
   AddField             00:00:00.6139761
   AddNormal            00:00:00.5312850
   AddCache             00:00:00.5739332
   
+```
+
+Not a huge amount in it. Using the property or just straightforward access to the array do seem to be slightly faster, and were consistently so, but not by enough to make much a difference on most codebases - remember, this is less than 0.1 seconds across a billion loops. Unless the stuff happening inside the loop is very fast indeed, that's not going to make much of a difference.
+
+What about though if we store the values in a list, not an array?
+
+```
+
 Run #1
   AddProperty          00:00:00.9148230
   AddField             00:00:00.7792866
@@ -105,23 +210,26 @@ Run #2
   AddNormal            00:00:00.9050327
   AddCache             00:00:00.6279809
   
+```
+
+Woah. Suddenly checking against the count of the list is slower than caching the value by about 40 to 50 percent. Again it's not much in the grand scheme of things, but it does seem surprising.
+
+I imagine this is because the length of a list can change, so the Jitter doesn't know it can cache the count.
+
+So let's try to make arrays more difficult for the Jitter. Let's call instead of adding the integers directly, let's make a function `int Add(int a, int b) => a + b` and use that to perform addition inside the loops. Let's make this Add function virtual so that the Jitter doesn't know what happens inside it.
+
+Then lets make _values public. That way the Jitter can't know for sure that when Add is called inside the loop it doesn't replace _values.
+
+Let's see the results
   Run #1
--1243309312
   AddProperty          00:00:01.8455796
--1243309312
-  AddField             00:00:01.5908044
--1243309312
+  AddField             00:00:01.5908046
   AddNormal            00:00:01.5638944
--1243309312
   AddCache             00:00:01.5416786
 Run #2
--1243309312
   AddProperty          00:00:01.8052111
--1243309312
   AddField             00:00:01.5521521
--1243309312
   AddNormal            00:00:01.5575613
--1243309312
   AddCache             00:00:01.5555272
   
   Run #1
