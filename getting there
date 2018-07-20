@@ -218,10 +218,10 @@ I imagine this is because the length of a list can change, so the Jitter doesn't
 
 So let's try to make arrays more difficult for the Jitter. Let's call instead of adding the integers directly, let's make a function `int Add(int a, int b) => a + b` and use that to perform addition inside the loops. Let's make this Add function virtual so that the Jitter doesn't know what happens inside it.
 
-Then lets make _values public. That way the Jitter can't know for sure that when Add is called inside the loop it doesn't replace _values.
+Then lets make _values public. That way the Jitter can't know for sure that when Add is called inside the loop it doesn't replace _values with another array, and so maybe it will no longer be able to cache _value.Length.
 
-Let's see the results
-  Run #1
+Let's see the results:
+
   AddProperty          00:00:01.8455796
   AddField             00:00:01.5908046
   AddNormal            00:00:01.5638944
@@ -231,22 +231,51 @@ Run #2
   AddField             00:00:01.5521521
   AddNormal            00:00:01.5575613
   AddCache             00:00:01.5555272
-  
+
+Woah!
+
+Add property is suddenly far slower than everything else!
+
+But interestingly enough AddNormal is no slower, which suggests something else is going on. Let's see what happens when we reorder the benchmarks:
+
   Run #1
--1243309312
   AddField             00:00:01.8848794
--1243309312
   AddNormal            00:00:01.6330310
--1243309312
   AddProperty          00:00:01.5610518
--1243309312
   AddCache             00:00:01.5592312
 Run #2
--1243309312
   AddField             00:00:01.8052472
--1243309312
   AddNormal            00:00:01.5768331
--1243309312
   AddProperty          00:00:01.5634327
--1243309312
   AddCache             00:00:01.5566960
+
+Aha.
+
+So it just seems the first benchmark to run is slower in this case. I don't know why, but it's probably something to do with the virtual function call, and nothing to do with arrays.
+
+The other benchmarks are all pretty much identically fast.
+
+#### Conclusion
+
+I think the conclusion here is not anything specific about loops, or caching. It's a more general lesson about optimising.
+
+There is no point trying to second guess the Jitter, and assume that if we organise our code this way it will be faster than the other way.
+
+Firstly because this will make our code trickier to read, and secondly because it is just as likely to be wrong as right.
+
+A thousand different factors can effect the exact performance of your code, and it's impossible to estimate upfront what effect your code has.
+
+Instead when writing our code we should do so in the most idiomatic, clearest way. Afterwards, we can profile in a **real world scenario** , and see what works best.
+
+Micro-benchmarks are useful in specific cases. But they cannot tell us what the real impact of our code change will be, especially in something as subtle as caching. As we've seen, the slightest change to the code being benchmarked can completely alter the results.
+
+Only a real world scenario test can tell us whether such changes our truly helpful*.
+
+One final point.
+
+The Jitter is different for every architecture, and every runtime. What's faster now for you maybe not be faster for someone else right now, or you in a year.
+
+Whereas if you write clean code, that stays forever.
+
+* Of course this does depend on what you're doing. Linq will always be slower than the equavelent foreach loop, since it's simply got more work to do. But changing linq to foreach is an algorithmic change to your code that the compiler and Jitter don't have the authority to do. Whereas caching they are perfectly able to work out for themselves, and often better than you at deciding whether to. Same goes for things like inlining and calling the garbage collector.
+
