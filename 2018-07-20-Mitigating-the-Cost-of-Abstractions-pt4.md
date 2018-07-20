@@ -277,5 +277,5 @@ The Jitter is different for every architecture, and every runtime. What's faster
 
 Whereas if you write clean code, that stays forever.
 
-* Of course this does depend on what you're doing. Linq will always be slower than the equavelent foreach loop, since it's simply got more work to do. But changing linq to foreach is an algorithmic change to your code that the compiler and Jitter don't have the authority to do. Whereas caching they are perfectly able to work out for themselves, and often better than you at deciding whether to. Same goes for things like inlining and calling the garbage collector.
+*Of course this does depend on what you're doing. Linq will always be slower than the equavelent foreach loop, since it's simply got more work to do. But changing linq to foreach is an algorithmic change to your code that the compiler and Jitter don't have the authority to do. Whereas caching they are perfectly able to work out for themselves, and often better than you at deciding whether to. Same goes for things like inlining and calling the garbage collector.
 
