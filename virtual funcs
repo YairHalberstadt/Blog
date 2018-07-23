@@ -1,0 +1,47 @@
+---
+Title: Mitigating The Cost Of Abstractions pt6. Using Virtual Functions.
+---
+
+### Mitigating The Cost Of Abstractions pt6. Using Virtual Functions.
+
+This post is going to be a mix of discussing architecture, as well as performance.
+
+#### A description of virtual functions
+
+Both virtual function calls, and calls to interface methods, are less straightforward than a normal method call.
+
+With a normal method call, the compiler knows what function is going to be called, and so the Jitter is able to simply jump to the correct function when the code runs.
+
+With virtual functions and interface methods, the compiler can't know which method is going to be called, since it depends on the type passed in.
+
+As such it builds a VTable, which the runtime checks to see which method it should call, and jumps to that.
+
+There are 3 relevant performance costs here.
+
+1. The VTable check takes time. This of course slows down performance.
+
+2. The Jitter cannot inline a virtual function, since it doesn't know which function will finally be called. This limits it's ability to optimise function calls, especially when a fast function is called in a tight loop.
+
+3. A VTable must be created for every virtual function. This increases the total amount of stuff the runtime has to hold in memory to run the code. This uses RAM, and also makes a cache miss more likely.
+
+For plenty of code bases this will be irrelevant. If one uses virtual functions judiciously, and only on methods that are anyways long and slow, there is unlikely to be a noticeable performance hit.
+
+On the other hand, just one virtual function call in the wrong place can wreck performance under certain circumstances. See my post about using functions to do arithmetic for an example of an interface method which caused a serious performance hit, and the trick I used to avoid it.
+
+Note that if you call a method on an implementation of interface directly, or you call a sealed override of a virtual method directly, there is no performance hit. It's only when the compiler cannot be sure what method will be called - ie when you call the method on the interface, not the implementation, or call a non-sealed virtual function - that you get a performance hit.
+
+So the first tips I can give you are:
+
+**Don't use virtual functions unless there is a specific reason too!** 
+
+**Always seal your virtual function overrides, unless there is a specific reason not to!**
+
+#### Architectural Issues With Virtual Functions
+
+As I said above, virtual functions and interfaces have similiar costs. However interfaces tend to have a positive effect on architecture, whereas virtual functions raise a number of problems.
+
+Firstly let's look at interfaces.
+
+When you program to an interface, it tends to improve the quality of your code, as it more strictly divides the inside and the outside of the class. As such it encourages a loosely coupled architecture. Furthermore it makes testing easier, and makes it simple to plug in a different class or remove an old one.
+
+As such I believe that even on the most performance critical code it's worth programming to an interface. The wonderful thing about interfaces is they're a doddle to remove when necessary, and so once the code is done, one can remove any unneeded interfaces on internal code, and get an instant performance boost.
