@@ -237,8 +237,6 @@ Run #2
 
 ```
 
-Woah!
-
 AddProperty is suddenly far slower than everything else!
 
 But interestingly enough AddNormal is no slower, which suggests something else is going on. Let's see what happens when we reorder the benchmarks:
