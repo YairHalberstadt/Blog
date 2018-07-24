@@ -36,12 +36,39 @@ So the first tips I can give you are:
 
 **Always seal your virtual function overrides, unless there is a specific reason not to!**
 
-#### Architectural Issues With Virtual Functions
+#### Architectural Advantages Of Interfaces
 
-As I said above, virtual functions and interfaces have similiar costs. However interfaces tend to have a positive effect on architecture, whereas virtual functions raise a number of problems.
+As I said above, virtual functions and interfaces have similiar costs, although interfacea _may_ be slightly slower, depending on use case. However interfaces tend to have a positive effect on architecture, whereas virtual functions raise a number of problems.
 
 Firstly let's look at interfaces.
 
 When you program to an interface, it tends to improve the quality of your code, as it more strictly divides the inside and the outside of the class. As such it encourages a loosely coupled architecture. Furthermore it makes testing easier, and makes it simple to plug in a different class or remove an old one.
 
-As such I believe that even on the most performance critical code it's worth programming to an interface. The wonderful thing about interfaces is they're a doddle to remove when necessary, and so once the code is done, one can remove any unneeded interfaces on internal code, and get an instant performance boost.
+Especially if one uses standard naming conventions, an interface is easy to spot, and is explicit about not providing an implementation. As such when one is using an interface one is fully aware that one is dealing with a contract, not an implementation.
+
+A class can inherit multiple interface, and can implement them both explicitly and implicitly. Thus accepting an interface in your API as opposed to a class gives far more flexibility to the client code as to how to make use of the API.
+
+An interface implementation is also non-virtual by default. As such you only pay the cost of using a Virtual function if you access the implementation via the interface rather than directly calling the method on the implementing class, which means interfaces are pay as you go. If you don't use them, they don't cost you. They will still increase the amount of memory needed in RAM, but if they're never used, they won't clog up the cache.
+
+As such I believe that even on the most performance critical code it's worth programming to an interface. The wonderful thing about interfaces is they're a doddle to remove if they are only implemented once, and so once the code is done, one can remove any unneeded interfaces on internal code, and get an instant performance boost.
+
+#### Architectural Issues With Virtual Functions
+
+Now virtual functions do have some advantages in specific cases. However they also come with significant costs.
+
+Let's consider Java for example. In Java all methods are virtual by default, unless explicitly sealed. As a result not only is there a huge performance cost, but there is a huge safety cost.
+
+A class can never be sure when calling one of it's own methods what it's effect will be. Maybe the method will be overridden, and bugs will appear.
+
+Similarly, one can never safely override a method, because one doesn't know how the method is used internally. The fact that it's virtual is no proof it's safe to override it, since all methods are virtual by default.
+
+Fortunately in C# virtual methods are less pervasive, as methods are sealed by default.
+
+However as a technique to modify behaviour they are less elegant than interfaces.
+
+Firstly they don't divide implementation and definition neatly, but instead cause tight coupling as inheriting classes and base classes both are directly effected by the others implementation.
+
+Secondly accepting a class, even an abstract one, in an API gives far less flexibility to the client code, as all objects passed in to that API must inherit from that class, and as such cannot inherit from anything else.
+
+Thirdly virtual function overrides are virtual by default. As such, even if you access the inheriting class directly, you still pay for a virtual function call. They are not pay as you go, unless explicitly sealed, moving away from the 'pit of success' interfaces try to provide.
+
