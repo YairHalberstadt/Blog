@@ -72,3 +72,58 @@ Secondly accepting a class, even an abstract one, in an API gives far less flexi
 
 Thirdly virtual function overrides are virtual by default. As such, even if you access the inheriting class directly, you still pay for a virtual function call. They are not pay as you go, unless explicitly sealed, moving away from the 'pit of success' interfaces try to provide.
 
+Fourthly the implementation of the parent class may depend on the virtual function that is being overridden. It is easy to unwittingly write code that is dependent on the base method implementation. Thus one can unknowingly break code by overriding a function. Meanwhile when relying on interface methods it is explicit that the interface has no given implementation, and so developers are aware not to rely on a specific implementation of the interface.
+
+Fifth interfaces are more explicit than virtual methods. When implementing an interface it is clear what has to be done: you provide a method for every member of the interface. When inheriting from a parent class it is not clear which virtual functions should be overridden, and what effect they will have on the parent class. Similarly when recieving an interface, it is obvious that the exact implementation will change, so one does not rely on it. However when receiving a class, it is not at all obvious at first sight if the class has virtual functions, and what their effect is.
+
+Given my preferences for interfaces over virtual functions, let's go through common use cases for virtual functions, and whether or not we can replace them with interfaces.
+
+#### Use Case 1: Abstract Classes
+
+Unfortunately interfaces in C# have limitations. As such if one wants to provide operator overloads or implicit casts to interfaced, one has no choice but to use an abstract class instead, and replace interface methods with abstract methods.
+
+With C# 8 we should hopefully see this issue corrected, and we can start converting abstract classes to interfaces.
+
+Another limitation with interfaces is that one cannot provide an implementation in interfaces for behaviour that is resultant of the interface methods.
+
+So for example
+
+``` csharp
+
+public interface MathsDefiner
+{
+    int Add(int a, int b);
+    int Negative(int a);
+}
+
+```
+
+Now I want to define that subtraction is the same as adding the negative of the number, so there should be a method ` int Subtract(int a, int b) => Add(a, Negative(b))`.
+
+However I can't put Subtract in the interface because then someone may implement it incorrectly, and because I don't want to pay for an extra virtual function call.
+
+Currently one can use extension methods like so
+
+``` csharp
+
+public interface IMathsDefiner
+{
+    int Add(int a, int b);
+    int Negative(int a);
+}
+
+public static class IMathsDefinerExtensions
+{
+    public static int Subtract(this IMathsDefiner mathsDef, int a, int b) => Add(a, Negative(b));
+}
+
+```
+
+However it would be understandable if someone wanted all the methods to be in the same place, or didn't want the extra noise of extension methods, and so chose to use an abstract class instead.
+
+C# 8 should again hopefully mitigate that issue.
+
+Abstract classes are annoying as they do not support multiple inheritance. However they are often necessary, and so long as they are just used as an interface+ they're not terribly problematic. Just remember to seal any abstract methods that your implement.
+
+#### Use Case 2. Allowing repl
+
