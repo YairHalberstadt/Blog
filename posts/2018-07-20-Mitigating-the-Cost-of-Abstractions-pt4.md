@@ -222,6 +222,9 @@ Then lets make _values public. That way the Jitter can't know for sure that when
 
 Let's see the results:
 
+```
+
+Run #1
   AddProperty          00:00:01.8455796
   AddField             00:00:01.5908046
   AddNormal            00:00:01.5638944
@@ -232,13 +235,17 @@ Run #2
   AddNormal            00:00:01.5575613
   AddCache             00:00:01.5555272
 
+```
+
 Woah!
 
-Add property is suddenly far slower than everything else!
+AddProperty is suddenly far slower than everything else!
 
 But interestingly enough AddNormal is no slower, which suggests something else is going on. Let's see what happens when we reorder the benchmarks:
 
-  Run #1
+```
+
+ Run #1
   AddField             00:00:01.8848794
   AddNormal            00:00:01.6330310
   AddProperty          00:00:01.5610518
@@ -248,6 +255,8 @@ Run #2
   AddNormal            00:00:01.5768331
   AddProperty          00:00:01.5634327
   AddCache             00:00:01.5566960
+
+```
 
 Aha.
 
