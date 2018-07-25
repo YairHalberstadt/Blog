@@ -125,5 +125,99 @@ C# 8 should again hopefully mitigate that issue.
 
 Abstract classes are annoying as they do not support multiple inheritance. However they are often necessary, and so long as they are just used as an interface+ they're not terribly problematic. Just remember to seal any abstract methods that your implement.
 
-#### Use Case 2. Allowing repl
+#### Use Case 2. Allowing slight modifications to an existing class.
 
+Oftentimes one has a class that is very similiar to an existing class, but has some features changed/added. As such one wants to avoid reimplementing the entire class, and so chooses to make one of the parents classes functions virtual, and to override it.
+
+For example, you might have a BinaryTree class, and then have a SubscribableBinaryTree which is the same as a BinaryTree, but sends an event when an item is added.
+
+So you do something like this:
+
+``` csharp
+
+public class BinaryTree
+{
+ 
+...
+
+    public virtual void Add(Node parentNode, Node newNode, bool rhs)
+    {
+    ...
+    }
+}
+
+public class SubscribableBinaryTree : BinaryTree
+{
+...
+
+    public override void Add(Node parentNode, Node newNode, bool rhs)
+    {
+        AddEvent.Invoke();
+        base.Add(parentNode, newNode, rhs);
+    }
+}
+
+
+```
+
+Now this should in and of itself be a code smell, since you are modifying the parent class for the sake of a different class, even though it has no internal need to be virtual. BinaryTree is a perfectly valid, self contained class, which no-one would ever think to provide with virtual methods untill you came along with your SubscribableBinaryTree.
+
+Besides for all the problems with virtual functions I've outlined above, this pattern forces every method in every class to be virtual just in case someone wants to modify its behaviour later. Ugh.
+
+Besides, all you want to modify is the external interface of the class, but you've ended up modifying the internals as well. What happens if BinaryTree uses add internally in other methods? You'll have events firing when you don't want them to.
+
+Using interfaces there is a more general solution.
+
+Firstly BinaryTree should implement an IBinaryTree interface. It should because every reusable class should, to aid flexibility and testing.
+
+Secondly SubscribableBinaryTree should also implement the IBinaryTree interface, and delegate implementation to BinaryTree. Resharper can do all this for you in two clicks.
+
+Thirdly you edit the Add method to call your custom logic before it calls BinaryTree.Add().
+
+``` csharp
+
+public interface IBinaryTree
+{
+    void Method1(T param);
+    void Method2(T param);
+    void Method3(T param);
+    void Add(Node parentNode, Node newNode, bool rhs);
+}
+
+public class BinaryTree : IBinaryTree
+{
+ 
+...
+
+    public void Add(Node parentNode, Node newNode, bool rhs)
+    {
+    ...
+    }
+}
+
+public class SubscribableBinaryTree : IBinaryTree
+{
+    private BinaryTree _tree;
+
+...
+
+    public void Method1(T param) => _tree.Method1;
+    public void Method2(T param) => _tree.Method2;
+    public void Method3(T param) => _tree.Method3;
+
+    public void Add(Node parentNode, Node newNode, bool rhs)
+    {
+        AddEvent.Invoke();
+        _tree.Add(parentNode, newNode, rhs);
+    }
+}
+
+
+```
+
+An added advantage of this technique is that one could make the internal 
+
+
+As well as the advantages outlined above, this has both performance advantages and disadvantages.
+
+The advantages are that when dealing directly with both
