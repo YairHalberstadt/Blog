@@ -36,6 +36,46 @@ So the first tips I can give you are:
 
 **Always seal your virtual function overrides, unless there is a specific reason not to!**
 
+#### virtual method internals
+
+The implementation of virtual methods is actually relatively straightforward. Since multiple inheritance is disallowed in C#, every class has a single inheritance chain descending from obj.
+
+We order all the virtual methods of a class in order of where they height up the chain. Thus the first three methods for any class will be some permutation of object.GetHashCode, object.Equals and object.ToString. Lets call this the method ordering. 
+
+We then build a virtual table for each class, which is basically an array of function pointers to each virtual method, ordered using the method ordering.
+
+Every object has a pointer to it's classes virtual table in its object header.
+
+A virtual function call gets the location of the virtual table from the object header, adds the index of the method in the method ordering to the location, and gets the function pointer from there.
+
+So given a method MyClass.Method() is the 5th one in the method ordering this is how a callsite would be viewed by the Jitter.
+
+``` csharp
+
+    public static void CallMethod(MyClass obj) => obj.Method();
+
+    // This turns into something like
+
+    public static void CallMethod(MyClass obj) => obj.Header.VirtualTable[5]();
+
+    // Or it's equivalent in machine code at any rate.
+
+```
+With interfaces this wouldn't work, for a number of reasons.
+
+Firstly structs can implement interfaces but have no object header.
+
+Secondly, a class can implement multiple interfaces. As a result it's impossible for all classes to have the same index for the methods in the interface they implement.
+
+For example, let's say Interface1 usually occupies slots 6 - 10 in a vtable, and Interface2 usually occupies slots 8-15.
+
+Is a class implements both interfaces, how would we know where in the VTable to find the relevant method?
+
+Instead virtual stub dispatch is used for interfaces. Whilst the internals are complicated, the basic mechanism is simple - the virtual stub dispatch is basically just a dictionary of types to methods. The type is extracted from the object, and the method is looked up in the dictionary, and called.
+
+Caching is used to increase performance with the most commonly called implementations of the method.
+
+
 #### Architectural Advantages Of Interfaces
 
 As I said above, virtual functions and interfaces have similiar costs, although interfacea _may_ be slightly slower, depending on use case. However interfaces tend to have a positive effect on architecture, whereas virtual functions raise a number of problems.
