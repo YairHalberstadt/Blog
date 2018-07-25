@@ -61,11 +61,7 @@ So given a method MyClass.Method() is the 5th one in the method ordering this is
     // Or it's equivalent in machine code at any rate.
 
 ```
-With interfaces this wouldn't work, for a number of reasons.
-
-Firstly structs can implement interfaces but have no object header.
-
-Secondly, a class can implement multiple interfaces. As a result it's impossible for all classes to have the same index for the methods in the interface they implement.
+With interfaces this wouldn't work, since a class can implement multiple interfaces. As a result it's impossible for all classes to have the same index for the methods in the interface they implement.
 
 For example, let's say Interface1 usually occupies slots 6 - 10 in a vtable, and Interface2 usually occupies slots 8-15.
 
