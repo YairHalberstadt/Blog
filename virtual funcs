@@ -71,10 +71,19 @@ Instead virtual stub dispatch is used for interfaces. Whilst the internals are c
 
 Caching is used to increase performance with the most commonly called implementations of the method.
 
+As a result interfaces calls are slower than virtual function calls. The exact performance cost depends on whether the interface call is usually being made on the same type, which will allow effective caching of the method during virtual stub dispatch.
+
+In tests I performed, interface calls were about double as slow as virtual calls in the best case scenario, where it is only ever called on one type.
+
+Either way, both virtual functions and interfaces calls should be avoided in tight loops in performance critical code.
+
+If they are necessary, one can use structs to implement an interface, and call the interface using a generic method with a type constraint, as discussed in a previous post. That offers no performance costs other than that of initialising a new instance of the generic type.
+
+If that still isn't acceptable that virtual functions are better than interface calls from a performance perspective, but still slow, and rife with other issues as we shall soon see.
 
 #### Architectural Advantages Of Interfaces
 
-As I said above, virtual functions and interfaces have similiar costs, although interfacea _may_ be slightly slower, depending on use case. However interfaces tend to have a positive effect on architecture, whereas virtual functions raise a number of problems.
+As I said above, virtual functions and interfaces have similiar costs, although interfacea will be slower, depending on use case. However interfaces tend to have a positive effect on architecture, whereas virtual functions raise a number of problems.
 
 Firstly let's look at interfaces.
 
@@ -84,9 +93,9 @@ Especially if one uses standard naming conventions, an interface is easy to spot
 
 A class can inherit multiple interface, and can implement them both explicitly and implicitly. Thus accepting an interface in your API as opposed to a class gives far more flexibility to the client code as to how to make use of the API.
 
-An interface implementation is also non-virtual by default. As such you only pay the cost of using a Virtual function if you access the implementation via the interface rather than directly calling the method on the implementing class, which means interfaces are pay as you go. If you don't use them, they don't cost you. They will still increase the amount of memory needed in RAM, but if they're never used, they won't clog up the cache.
+An interface implementation is also non-virtual by default. As such you only pay the cost of using a virtual function if you access the implementation via the interface rather than directly calling the method on the implementing class, which means interfaces are pay as you go. If you don't use them, they don't cost you. They will still increase the amount of memory needed in RAM, but if they're never used, they won't clog up the cache.
 
-As such I believe that even on the most performance critical code it's worth programming to an interface. The wonderful thing about interfaces is they're a doddle to remove if they are only implemented once, and so once the code is done, one can remove any unneeded interfaces on internal code, and get an instant performance boost.
+As such I believe that even on the most performance critical code it's worth programming to an interface  where one is not facing a performance bottleneck. The wonderful thing about interfaces is they're a doddle to remove if they are only implemented once, and so once the code is done, one can remove any unneeded interfaces on internal code, and get an instant performance boost.
 
 #### Architectural Issues With Virtual Functions
 
@@ -251,9 +260,26 @@ public class SubscribableBinaryTree : IBinaryTree
 
 ```
 
-An added advantage of this technique is that one could make the internal 
+An added advantage of this technique is that one could make the _tree an IBinaryTree and inject the tree into SubscribableBinaryTree, or make the class `SubscribableBinaryTree<T> where T : IBinaryTree` and have _Tree an instance of T. This allows you to extend this code to work with all IBinaryTrees, something that one can't do by inheriting from BinaryTree.
 
+As well as all the advantages outlined above, this has both performance advantages and disadvantages.
 
-As well as the advantages outlined above, this has both performance advantages and disadvantages.
+The advantages are that when dealing directly with a BinaryTree there are no performance costs, as it has no virtual methods. If this is likely to be far more used than SubscribableBinaryTree, this is extremely important.
 
-The advantages are that when dealing directly with both
+On the other hand, any method which accepts an IBinaryTree now has to use an interface call on any IBinaryTree method it accesses, whereas with the original code, it would have been able to accept a BinaryTree, use non-virtual methods for all except Add, and still work with a SubscribableBinaryTree.
+
+#### Use Case 3. Modifying the internal behaviour of a class.
+
+The Animal example is one of the most celebrated uses of virtual functions.
+
+You have an abstract class Animal, with an abstract method MakeNoise(). You then inherit from Animal with a cat and a dog. The Cat meows when MakeNoise() is called, and the dog barks.
+
+The idea here being that the virtual function is not just there to provide you with a method to save your having to copy the class out over again for each animal, but is an intrinsic part of how Animal works. Animal expects you to override MakeNoise in order to allow Animal to have many different behaviours.
+
+The way this would be done with interfaces would be with dependency injection. You would pass an INoiseMaker into Animals constructor, or make Animal generic on a T where T inherits INoiseMaker. Then MakeNoise would call INoiseMaker.MakeNoise().
+
+Then Cat or Dog could inherit from Animal, and have a Meower or Barker baked in.
+
+At first sight the abstract Animal seems neater and more reflective of the underlying reality of the objects we are modelling. It seems to be a natural way of expressing the relationship between animals.
+
+Alas the real world isn't all kittens and puppies. When you're dealing with StemmerFactories and ChunkPointDetectors it becomes more difficult to justify that one architecture is more reflective of the true nature of these objects.
