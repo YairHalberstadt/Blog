@@ -1,0 +1,47 @@
+---
+Title: Implementing Malloc. A Thought Experiment
+---
+
+#### Implementing Malloc. A Thought Experiment
+
+I recently saw a post online about an interview question somebody had. He was simply asked to implement Malloc.
+
+For those that don't know, Malloc is the method used by C (and C++ under the hood) to assign memory on the heap.
+
+Now I have to make clear, **I have no idea how Malloc is implemented in practice**. However the question did get me thinking to myself, how _would_ I implement Malloc?
+
+#### Defining the Question
+
+There are two relevant functions we will have to implement, on a class called memory manager.
+
+``` csharp
+
+public static class MemoryManager
+{
+    public static int this[int pointer] {get => _memory[pointer]; set => _memory[pointer] = value;
+
+    private static int[] _memory = new int[1000000000]
+
+    public static int Malloc(int size) => throw new NotImplementedException();
+
+    public static void Free(int location, int size) => throw new NotImplementedException();
+
+}
+
+```
+
+At start-up we are allocated a large amount of RAM to be used by our program. In this case I've given ourselves a gigabyte.
+
+This memory is accessed through our MemoryManager. We use a pointer to get the value at a particular point in the memory via our MemoryManager array accessor. Since at runtime C is type agnostic, we will consider every location in the memory to be an int. It is up to the compiler to preserve type safety.
+
+The function Malloc asks for a specific amount of memory to be allocated for the callers use, and returns a pointer to that memory. Malloc cannot allocate the same memory twice.
+
+In order to prevent us running out of memory, Free must used. This frees a chunk of memory of a given size, allowing Malloc to reallocate the memory.
+
+This I think is a suitable model for the problem in C# terms. There are of course added complications that arise in practice, but they don't particularly change this fundamental model.
+
+The problem is to provide a safe, performant implementation of Malloc and Free. They must not allocate memory twice, unless it's been freed first, and and must not 'leak' memory, such that memory cannot be reallocated even after it's been freed.
+
+#### Attempt 1.
+
+In this attempt, we will not attempt to worry about managing the memory in the data structures Malloc and Free use internally. We will assume that they are all stored on some external memory and are garbage collected. We will of course remove this assumption later.
