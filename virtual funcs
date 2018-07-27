@@ -282,4 +282,38 @@ Then Cat or Dog could inherit from Animal, and have a Meower or Barker baked in.
 
 At first sight the abstract Animal seems neater and more reflective of the underlying reality of the objects we are modelling. It seems to be a natural way of expressing the relationship between animals.
 
-Alas the real world isn't all kittens and puppies. When you're dealing with StemmerFactories and ChunkPointDetectors it becomes more difficult to justify that one architecture is more reflective of the true nature of these objects.
+Alas the real world isn't all kittens and puppies. When you're dealing with StemmerFactories and ChunkPointDetectors it becomes more difficult to justify that one architecture is more reflective of the true nature of these objects. Instead you care about which technique is more flexible and poweful.
+
+Let's consider two real world examples.
+
+The first is implementing a SortedList<T>.
+
+Now you have to define how the SortedList should sort it's objects. You could add an IComparable constraint to T, but then you're limiting yourself to only a few types. Really you want the user to be able to define the sorting mechanism for each T.
+
+You could do this by giving SortedList an abstract Compare method, which you then implement.
+
+Or you could do this by injecting an IComparer<T> into the SortedList constructor.
+
+Either way, if you have a hundred different classes you'll need to inherit from SortedList a hundred times, or implement IComparer 100 times.
+
+The difference is what happens after that. Because soon you decide to create a SortedDictionary and a SortedTree and a SortedHashSet and a SortedBalancedBinaryTree, and decide to create the Linq extension methods .SortBy, .MaxBy and .MedianBy, and all of them require using a custom definition for Compare.
+
+If you went through the virtual method route, you're back to square one, needing to inherit from each Sorted class 100 times. And you'll still be stuck once you get to your custom Linq functions.
+
+However if you used dependency injection, you can inject the same IComparer into each of your classes and methods.
+
+The second example is a library with internal classes. As a random example it's a Linear Regression Library.
+
+Now the Linear Regression Library has a nice neat public API, but somewhere in its belly it has an internal class Scorer which calculates the mean squared distance between the given line and the points.
+
+Now for different data you need different definitions of distance.
+
+You might think to inherit from Scorer and override a virtual method which defines distance. However the class is internal so that won't work.
+
+The only option here is to inject an IDistanceCalculator through the public API of the Linear Regression Library, and for Scorer to use that.
+
+I think both of these examples reflect the same concept. Often using dependency injection encourages good separation of concerns, which aids code reuse and flexibility. Whereas using virtual methods can end up with putting everything thing and the kitchen sink in the same class.
+
+Just consider an abstract class with 3 different abstract methods each of which is overriden 3 different times. That requires 3^3 = 81 different classes to cover all the possible options, whereas using dependency injection would only require 9 interfaces to be defined.
+
+This indicates that the methods being overriden are no actually key to the class, and could be better put outside the class, in an interface.
