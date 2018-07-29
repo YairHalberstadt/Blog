@@ -18,14 +18,11 @@ There are two relevant functions we will have to implement, on a class called me
 
 public static class MemoryManager
 {
-    public static int this[int pointer] {get => _memory[pointer]; set => _memory[pointer] = value;
-
-    private static int[] _memory = new int[1000000000]
+    public static byte[] Memory { get; } = new byte[1000000000];
 
     public static int Malloc(int size) => throw new NotImplementedException();
 
     public static void Free(int location, int size) => throw new NotImplementedException();
-
 }
 
 ```
@@ -45,3 +42,86 @@ The problem is to provide a safe, performant implementation of Malloc and Free. 
 #### Attempt 1.
 
 In this attempt, we will not attempt to worry about managing the memory in the data structures Malloc and Free use internally. We will assume that they are all stored on some external memory and are garbage collected. We will of course remove this assumption later.
+
+To begin with Allocation is easy. We can store a pointer to the first free memory address, and when somebody asks for n units of memory, we can return the value of this pointer to them, and then increment our pointer by n.
+
+This works fine until a full Gigabyte of memory is allocated. Then we need to start allocating memory that has already been allocated, but has since been freed.
+
+To do this we have to store locations that have been allocated but not freed. The obvious way to do this, is to store a list of where the contigous blocks of memory are, and update these blocks every time malloc or free are called.
+
+So the list looks something like this.
+
+```
+Start: 0, End: 1009
+Start: 1457, End: 3876,
+Start: 3877, End 3879,
+Start: 154089, End 987523,
+...
+```
+
+Then we store a pointer to where we are up to in this list. When somebody asks for 1000 bytes of memory, we check if there's any memory after the current block in the list and before the next block. If yes we increase the end value of the current item in the list by 1000. If not we move the pointer to the next item in the list,and repeat. If we reach the end of the list, and there is not enough memory between the final block in the list and the end of our memory array, we loop back to the start of the list.
+
+If we get back to our original start point, and we haven't found any contiguous length of free memory large enough to store 1000 bytes, we throw an OutOfMemoryException.
+
+Freeing memory involves running through the list till the correct block is found, and readjusting the listaccordingly.
+
+So if 100 bytes are freed at location 2000, our list turns into
+
+```
+Start: 0, End: 1009
+Start: 1457, End: 2000
+Start: 2100, End: 3876,
+Start: 3877, End 3879,
+Start: 154089, End 987523,
+...
+```
+
+And if two bytes are then freed at location 3877 we get.
+
+```
+Start: 0, End: 1009
+Start: 1457, End: 2000
+Start: 2100, End: 3876,
+Start: 154089, End 987523,
+...
+```
+
+As you can see, we keep on adding or removing items in the middle of the list. As such the correct data structure for this is a linked list, as an array based list would require copying the entire contents of the list if you added an item at location 0.
+
+So our implementation looks like this in C#
+
+``` csharp
+
+public static class MemoryManager
+{
+    public static byte[] Memory { get; } = new byte[1000000000];
+
+    public static int Malloc(int size) => throw new NotImplementedException();
+
+    public static void Free(int location, int size) => throw new NotImplementedException();
+
+    private static LinkedList<AllocatedMemory> AllocMemList = new LinkedList<AllocatedMemory>();
+
+    private static LinkedListNode<AllocatedMemory> CurrentMemLoc { get; set; }
+
+    static MemoryManager()
+    {
+        CurrentMemLoc = new LinkedListNode<AllocatedMemory>(new AllocatedMemory(0, 0));
+        AllocMemList.AddFirst(CurrentMemLoc);
+    }
+
+    private class AllocatedMemory
+    {
+        public int Start { get; set; }
+        public int End { get; set; }
+        public int Length => End - Start;
+
+        public AllocatedMemory(int start, int end)
+        {
+            Start = start;
+            End = end;
+        }
+    }
+}
+
+```
