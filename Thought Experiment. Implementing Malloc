@@ -96,9 +96,47 @@ public static class MemoryManager
 {
     public static byte[] Memory { get; } = new byte[1000000000];
 
-    public static int Malloc(int size) => throw new NotImplementedException();
+    public static int Malloc(int size)
+        {
+            var startingMemLoc = CurrentMemLoc;
+            do
+            {
+                var nextLoc = CurrentMemLoc.Next;
+                var space = nextLoc?.Value.Start ?? Memory.Length - CurrentMemLoc.Value.End;
+                if (size < space)
+                {
+                    var newItemStart = CurrentMemLoc.Value.End;
+                    CurrentMemLoc.Value.End += size;
+                    return newItemStart;
+                }
+                if (size == space)
+                {
+                    var newItemStart = CurrentMemLoc.Value.End;
+                    CurrentMemLoc.Value.End = CurrentMemLoc?.Value.End ?? Memory.Length;
+                    if (nextLoc != null)
+                        AllocMemList.Remove(nextLoc);
+                    return newItemStart;
+                }
+                CurrentMemLoc = CurrentMemLoc.Next ?? AllocMemList.First;
+            }
+            while (startingMemLoc != CurrentMemLoc);
+            throw new OutOfMemoryException();
+        }
 
-    public static void Free(int location, int size) => throw new NotImplementedException();
+    public static void Free(int location, int size)
+        {
+            var containingLoc = AllocMemList.First;
+            while(containingLoc.Value.End <= location)
+            {
+                if (containingLoc.Next == null)
+                    throw new Exception("Freeing Unallocated Memory");
+                containingLoc = containingLoc.Next;
+            }
+            if(containingLoc.Value.Start > location)
+                throw new Exception("Freeing Unallocated Memory");
+            if(containingLoc.Value.End - location == size)
+
+        }
 
     private static LinkedList<AllocatedMemory> AllocMemList = new LinkedList<AllocatedMemory>();
 
