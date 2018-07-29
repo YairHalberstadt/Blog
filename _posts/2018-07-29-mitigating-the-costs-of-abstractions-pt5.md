@@ -1,10 +1,10 @@
 ---
-Title: Mitigating The Cost Of Abstractions pt6. Using Virtual Functions.
+Title: Mitigating The Cost Of Abstractions pt5. Virtual Functions.
 ---
 
-### Mitigating The Cost Of Abstractions pt6. Using Virtual Functions.
+### Mitigating The Cost Of Abstractions pt5. Virtual Functions.
 
-This post is going to be a mix of discussing architecture, as well as performance.
+This post is going to discuss both performance and architecture relating to the use of virtual methods.
 
 #### A description of virtual functions
 
