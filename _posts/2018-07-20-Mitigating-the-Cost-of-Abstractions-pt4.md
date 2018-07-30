@@ -2,7 +2,7 @@
 Title: Mitigating the Cost of Abstractions pt4. Benchmarking Caches in Loops
 ---
 
-### Mitigating the Cost of Abstractions pt4. Benchmarking Caches in Loops
+## Mitigating the Cost of Abstractions pt4. Benchmarking Caches in Loops
 
 Consider the 4 following Add functions:
 
