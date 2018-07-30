@@ -6,7 +6,7 @@ Title: Mitigating The Cost Of Abstractions pt5. Virtual Functions.
 
 This post is going to discuss both performance and architecture relating to the use of virtual methods.
 
-### A description of virtual functions
+#### A description of virtual functions
 
 Both virtual function calls, and calls to interface methods, are less straightforward than a normal method call.
 
@@ -36,7 +36,7 @@ So the first tips I can give you are:
 
 **Always seal your virtual function overrides, unless there is a specific reason not to!**
 
-### Virtual Method Internals
+#### Virtual Method Internals
 
 The implementation of virtual methods is actually relatively straightforward. Since multiple inheritance is disallowed in C#, every class has a single inheritance chain descending from obj.
 
@@ -81,7 +81,7 @@ If they are necessary, one can use structs to implement an interface, and call t
 
 If that still isn't acceptable, then virtual functions are better than interface calls from a performance perspective, but still slow, and rife with other issues as we shall soon see.
 
-### Architectural Advantages Of Interfaces
+#### Architectural Advantages Of Interfaces
 
 As I said above, virtual functions and interfaces have similiar costs, although interfacea will be slower, depending on use case. However interfaces tend to have a positive effect on architecture, whereas virtual functions raise a number of problems.
 
@@ -97,7 +97,7 @@ An interface implementation is also non-virtual by default. As such you only pay
 
 As such I believe that even on the most performance critical code it's worth programming to an interface  where one is not facing a performance bottleneck. The wonderful thing about interfaces is they're a doddle to remove if they are only implemented once, and so once the code is done, one can remove any unneeded interfaces on internal code, and get an instant performance boost.
 
-### Architectural Issues With Virtual Functions
+#### Architectural Issues With Virtual Functions
 
 Now virtual functions do have some advantages in specific cases. However they also come with significant costs.
 
@@ -123,7 +123,7 @@ Fifthly, interfaces are more explicit than virtual methods. When implementing an
 
 Given my preferences for interfaces over virtual functions, let's go through common use cases for virtual functions, and whether or not we can replace them with interfaces.
 
-### Use Case 1: Abstract Classes
+#### Use Case 1: Abstract Classes
 
 Unfortunately interfaces in C# have limitations. As such if one wants to provide operator overloads or implicit casts to interfaces, one has no choice but to use an abstract class instead, and replace interface methods with abstract methods.
 
@@ -170,7 +170,7 @@ C# 8 should again hopefully mitigate that issue.
 
 Abstract classes are annoying as they do not support multiple inheritance. However they are often necessary, and so long as they are just used as an interface+ they're not terribly problematic. Just remember to seal any abstract methods that your implement where possible.
 
-### Use Case 2. Allowing slight modifications to an existing class.
+#### Use Case 2. Allowing slight modifications to an existing class.
 
 Oftentimes one has a class that is very similiar to an existing class, but has some features changed/added. As such one wants to avoid reimplementing the entire class, and so chooses to make one of the parents classes functions virtual, and to override it.
 
@@ -268,7 +268,7 @@ The advantages are that when dealing directly with a BinaryTree there are no per
 
 On the other hand, any method which accepts an IBinaryTree now has to use an interface call on any IBinaryTree method it accesses, whereas with the original code, it would have been able to accept a BinaryTree, call non-virtual methods for all except Add, and still work with a SubscribableBinaryTree.
 
-### Use Case 3. Modifying the internal behaviour of a class.
+#### Use Case 3. Modifying the internal behaviour of a class.
 
 The Animal example is one of the most used examples of virtual functions.
 
