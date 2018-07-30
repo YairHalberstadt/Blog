@@ -8,6 +8,5 @@ I am a software developer specialising in C#, among other technologies. I hope t
       </a>
     </h2>
     <time datetime="{{ post.date | date: "%Y-%m-%d" }}">{{ post.date | date_to_long_string }}</time>
-    {{ post.content }}
   </article>
 {% endfor %}
