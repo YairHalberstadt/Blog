@@ -2,7 +2,7 @@
 Title: Mitigating the Costs of Abstractions. Using Immutable Arrays
 ---
 
-### Mitigating the Costs of Abstractions. Using Immutable Arrays
+## Mitigating the Costs of Abstractions. Using Immutable Arrays
 
 I am currently working on a linear algebra library.
 
