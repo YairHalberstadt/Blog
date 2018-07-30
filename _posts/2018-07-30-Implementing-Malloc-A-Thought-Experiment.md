@@ -29,7 +29,7 @@ public static class MemoryManager
 
 At start-up we are allocated a large amount of RAM to be used by our program. In this case I've given ourselves a gigabyte.
 
-This memory is accessed through our MemoryManager. We use a pointer to get the value at a particular point in the memory via our MemoryManager array accessor. Since at runtime C is type agnostic, we will consider every location in the memory to be an int. It is up to the compiler to preserve type safety.
+This memory is accessed through our MemoryManager. We use a pointer to get the value at a particular point in the memory via the Memory array. Since at runtime C is type agnostic, we will consider every location in the memory to be a byte. It is up to the compiler to preserve type safety.
 
 The function Malloc asks for a specific amount of memory to be allocated for the callers use, and returns a pointer to that memory. Malloc cannot allocate the same memory twice.
 
@@ -41,7 +41,7 @@ The problem is to provide a safe, performant implementation of Malloc and Free. 
 
 #### Attempt 1.
 
-In this attempt, we will not attempt to worry about managing the memory in the data structures Malloc and Free use internally. We will assume that they are all stored on some external memory and are garbage collected. We will of course remove this assumption later.
+In this attempt, we will not worry about managing the memory in the data structures Malloc and Free use internally. We will assume that they are all stored on some external memory and are garbage collected. We will of course remove this assumption later.
 
 To begin with Allocation is easy. We can store a pointer to the first free memory address, and when somebody asks for n units of memory, we can return the value of this pointer to them, and then increment our pointer by n.
 
@@ -63,7 +63,7 @@ Then we store a pointer to where we are up to in this list. When somebody asks f
 
 If we get back to our original start point, and we haven't found any contiguous length of free memory large enough to store 1000 bytes, we throw an OutOfMemoryException.
 
-Freeing memory involves running through the list till the correct block is found, and readjusting the listaccordingly.
+Freeing memory involves running through the list till the correct block is found, and readjusting the list accordingly.
 
 So if 100 bytes are freed at location 2000, our list turns into
 
@@ -217,14 +217,14 @@ We could also store a pointer to the last freed location. Then we could see whic
 
 This will increase the space usage of our linked list by 33%. It will also increase the cost of adding or removing a node in the linked list slightly.
 
-An alternative is to have a singly linked list as before. The store pointers to the first block after every n bytes.
+An alternative is to have a singly linked list as before. Then store pointers to the first block after every n bytes.
 
 So for example, we could have a pointer array of size 20. The first pointer in the array points to the begining of the LinkedList. The next pointer points to the block containing the first allocated memory after 50 mb. The next to the first after 100 mb, the third to the first after 150 mb, etc.
 
-Then freeing memory at location 159,869,423, one jumps straight to the node pointed at by the third member of the array, and start from there.
+Then freeing memory at location 159,869,423, one jumps straight to the node pointed at by the third member of the array, and starts iterating through the linked list from there.
 
-Whilst Free remains an O(n) operation in the number of contiguous blocks of memory, this is extremely effective. We used only 20 bytes, but decreased the average cost of a free operation by an average of 95%.
+Whilst Free remains an O(n) operation in the number of contiguous blocks of memory, this is extremely effective. We used only 20 bytes, but decreased the average cost of a free operation by 95%.
 
 Getting the next 95% reduction would use up 400 bytes, and the 95% after that would cost 8 kb. Then 160 kb, 3.2 mb, 64 mb, 1.28 gb, etc.
 
-At some point the amount of required memory required  to increase performance further isn't worth it. This is especially the case, as at some point the main cost of Free() will be the actual free operation, not the cost of iterating through the list to find the relevant block.
+At some point the amount of required memory required to increase performance further isn't worth it. This is especially the case, as at some point the main cost of Free() will be the actual free operation, not the cost of iterating through the list to find the relevant block.
