@@ -1,5 +1,5 @@
 ---
-Title: Mitigating The Costs Of Abstractions. Using Functions for Simple Arithmetic
+Title: Mitigating The Costs Of Abstractions pt2. Using Functions for Simple Arithmetic
 ---
 
 ## Mitigating The Costs Of Abstractions. Using Functions for Simple Arithmetic
