@@ -214,3 +214,17 @@ Memory tends to be freed in inverse order to when it was allocated, and close to
 Thus if we make the linked list a doubly-linked list, we could traverse backwards from the current location, to look for the memory location to free.
 
 We could also store a pointer to the last freed location. Then we could see which of the pointers we have to various locations on the linked list is closest to the location we have to free, and start from there.
+
+This will increase the space usage of our linked list by 33%. It will also increase the cost of adding or removing a node in the linked list slightly.
+
+An alternative is to have a singly linked list as before. The store pointers to the first block after every n bytes.
+
+So for example, we could have a pointer array of size 20. The first pointer in the array points to the begining of the LinkedList. The next pointer points to the block containing the first allocated memory after 50 mb. The next to the first after 100 mb, the third to the first after 150 mb, etc.
+
+Then freeing memory at location 159,869,423, one jumps straight to the node pointed at by the third member of the array, and start from there.
+
+Whilst Free remains an O(n) operation in the number of contiguous blocks of memory, this is extremely effective. We used only 20 bytes, but decreased the average cost of a free operation by an average of 95%.
+
+Getting the next 95% reduction would use up 400 bytes, and the 95% after that would cost 8 kb. Then 160 kb, 3.2 mb, 64 mb, 1.28 gb, etc.
+
+At some point the amount of required memory required  to increase performance further isn't worth it. This is especially the case, as at some point the main cost of Free() will be the actual free operation, not the cost of iterating through the list to find the relevant block.
