@@ -86,7 +86,7 @@ Start: 154089, End 987523,
 ...
 ```
 
-As you can see, we keep on adding or removing items in the middle of the list. As such the correct data structure for this is a linked list, as an array based list would require copying the entire contents of the list if you added an item at location 0.
+As you can see, we keep on adding or removing items in the middle of the list. As such the correct data structure for this is a linked list, as an array based list would require copying half the contents of the list on average, if an item is added at a random location.
 
 So our implementation looks like this in C#
 
@@ -126,16 +126,30 @@ public static class MemoryManager
     public static void Free(int location, int size)
         {
             var containingLoc = AllocMemList.First;
-            while(containingLoc.Value.End <= location)
+            while(containingLoc.Value.End < location)
             {
                 if (containingLoc.Next == null)
                     throw new Exception("Freeing Unallocated Memory");
                 containingLoc = containingLoc.Next;
             }
-            if(containingLoc.Value.Start > location)
+            var end = location + size;
+            if(containingLoc.Value.Start > location || ContainingLoc.Value.End < end)
                 throw new Exception("Freeing Unallocated Memory");
-            if(containingLoc.Value.End - location == size)
-
+            if(containingLoc.Value.Start == location && location != 0)
+            {
+                if(containingLoc.Value.End == end)
+                    AllocMemList.Remove(containingLoc);
+                else
+                    containingLoc.Value.Start = location;
+                return;
+            }
+            if(containingLoc.Value.End == end)
+            {
+                containingLoc.Value.End = location;
+                return
+            }
+            AllocMemList.AddAfter(containingLoc, new AllocatedMemory(end, containingLoc.Value.End));
+            containingLoc.Value.End = location;
         }
 
     private static LinkedList<AllocatedMemory> AllocMemList = new LinkedList<AllocatedMemory>();
@@ -163,3 +177,40 @@ public static class MemoryManager
 }
 
 ```
+#### Attempt 2. Moving to C
+
+Our implementation above is a perfectly valid one. It suffers from a number of performance problems though, as it is written using standard C# patterns and data structures. It also requires a garbage collector, which of course renders pointless the entire exercise of implementing Malloc.
+
+However the core algorithm is not going to change, and the big O space and time complexity of this implementation is the same as it would be in C.
+
+Now I'm not going to write out the implementation in C. Instead I will explain how it will be different.
+
+Firstly, we won't have any explicit structure called a linked list. Instead we will use structs containing the following 3 pieces of information: the start location of a contiguous block of allocated memory, the end location, and a pointer to the next such struct.
+
+We then keep a pointer to the first such struct.
+
+Other than that, the implementation is pretty much the same.
+
+Now when we create or delete these structs, we will have to call Malloc/Free. This will occur inside Malloc/Free, so we have to check whether infinite recursion could occur.
+
+We would only create or delete these structs at the end of Malloc/Free, once everything else has been done, to prevent our data structures being left in an inconsistent state.
+
+Now Malloc usually just appends to the end of a contiguous data block, so rarely creates or deletes a struct. The exception is when it exactly uses up the memory between two blocks. Then it combines the two structs, and will call free.
+
+Free rarely removes a block, usually adds a block, and sometimes does neither.
+
+Thus it will usually call Malloc, and rarely call free. Since Malloc rarely calls free, it is very unlikely for this to recurse long enough to cause a stack overflow. Thus our implementation is valid in C as well.
+
+#### Improving performance
+
+Assuming a large enough chunk of memory is readily available, Malloc should be an O(1) operation in the number of memory blocks allocated, since it just looks for the next large enough chunk.
+
+Free however is O(n) since it has to traverse through the linked list.
+
+The following heuristic could be used to improve the speed of Free, at the expense of space complexity.
+
+Memory tends to be freed in inverse order to when it was allocated, and close to where it was previously freed.
+
+Thus if we make the linked list a doubly-linked list, we could traverse backwards from the current location, to look for the memory location to free.
+
+We could also store a pointer to the last freed location. Then we could see which of the pointers we have to various locations on the linked list is closest to the location we have to free, and start from there.
