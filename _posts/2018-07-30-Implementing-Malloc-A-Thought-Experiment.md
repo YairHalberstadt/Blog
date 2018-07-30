@@ -2,7 +2,7 @@
 Title: Implementing Malloc. A Thought Experiment
 ---
 
-#### Implementing Malloc. A Thought Experiment
+## Implementing Malloc. A Thought Experiment
 
 I recently saw a post online about an interview question somebody had. He was simply asked to implement Malloc.
 
@@ -10,7 +10,7 @@ For those that don't know, Malloc is the method used by C (and C++ under the hoo
 
 Now I have to make clear, **I have no idea how Malloc is implemented in practice**. However the question did get me thinking to myself, how _would_ I implement Malloc?
 
-#### Defining the Question
+### Defining the Question
 
 There are two relevant functions we will have to implement, on a class called memory manager.
 
@@ -39,7 +39,7 @@ This I think is a suitable model for the problem in C# terms. There are of cours
 
 The problem is to provide a safe, performant implementation of Malloc and Free. They must not allocate memory twice, unless it's been freed first, and and must not 'leak' memory, such that memory cannot be reallocated even after it's been freed.
 
-#### Attempt 1.
+### Attempt 1.
 
 In this attempt, we will not worry about managing the memory in the data structures Malloc and Free use internally. We will assume that they are all stored on some external memory and are garbage collected. We will of course remove this assumption later.
 
@@ -177,7 +177,7 @@ public static class MemoryManager
 }
 
 ```
-#### Attempt 2. Moving to C
+### Attempt 2. Moving to C
 
 Our implementation above is a perfectly valid one. It suffers from a number of performance problems though, as it is written using standard C# patterns and data structures. It also requires a garbage collector, which of course renders pointless the entire exercise of implementing Malloc.
 
