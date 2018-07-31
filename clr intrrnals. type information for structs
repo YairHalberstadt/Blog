@@ -48,11 +48,21 @@ public sealed class Reference<T>  where T : Value type
 
 // System.ValueType defines an implicit cast from ValueType to object by returning a reference<T>.
 //System.Object defines an explicit cast from object to T where T is a struct, by checking if object is a Reference<T> and if so returning the Value.
+
+
 public static void SomeMethod( object obj);
 
-SomeMethod(22);
+SomeMethod(22); // This calls the implicit cast to an object by creating a Reference<int>
 ```
 
 To support interfaces we could have the compiler automatically create a class inheriting from Reference<T> every time a struct is defined, and have that class implement all the interfaces.
 
-Very little runtime support is absolutely necessary for this. Most of the features of boxing a struct can be achieved via compile time tricks in theory.
+Very little runtime support is absolutely necessary for this. Most of the features boxing a struct provides can be achieved via compile time tricks in theory.
+
+In practice the CLR tends to provide more support than it needs to for many language features. This is as a result of it's aim to be used across languages. By implementing more in the CLR and not leaving it up to the languages to implement all the features themselves, it means that the languages on top of the CLR are likely to be more generally inter-compatable.
+
+A final note about GetType()
+
+Whilst in theory Struct.GetType() could be turned into a compile time constant, at the moment it instead boxes the type and calls GetType on that.
+
+Since struct.GetType() will always return the same as typeof(struct) for an unboxed struct, one might as well use typeof since it is a compile time constant and avoids boxing the struct.
