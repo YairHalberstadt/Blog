@@ -1,6 +1,7 @@
 ---
 Title: CLR Internals. Runtime Type Information For Structs
 ---
+## CLR Internals. Runtime Type Information For Structs
 
 Objects will often exhibit different behaviour at runtime depending on their runtime type. For example, two different implementations of the same interface will have different function calls when the same interface method is called on them
 
