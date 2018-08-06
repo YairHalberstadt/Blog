@@ -53,3 +53,35 @@ Then, during a Gen0 collection one can traverse the tree starting at the stack, 
 
 If C# is garbage collected, how can memory leaks occur?
 
+The GC only looks to see if objects are accessible from the stack, or static objects. It makes no attempt to reason if theoretically accessable objects will ever in practice be accessed.
+
+As such certain data structures can leak memory by holding on to data which the type system renders impossible to access.
+
+As an obvious example, consider the following wrapper for a list.
+
+``` csharp
+
+public class FirstItemGetter<T>
+{
+     private readonly List<T> _list;
+
+     public FirstItemGetter(List<T> list ) => _list = list;
+
+     public T GetFirstItem => _list.FirstOrDefault();
+}
+
+```
+
+If the only reference to a list is stored in a FirstItemGetter, the List will not be freed. Neither will any of the objects the items in the list reference, nor the objects they reference, etc.
+
+This is despite it being impossible to access any object other than the first item in the list. Effectively the memory has leaked.
+
+Whilst this is quite obvious, it's not something .Net programmers readily think about. We're too used to relying on the garbage collector to realise that if we still have references to objects, the garbage collector can't free them. And I've come across more subtle versions of the problem, for example in a drop-out stack I implemented.
+
+Sometimes we 'leak' memory even when the type system renders it accessible.
+
+If we persist a giant list of items, throughout the lifetime of our program, but never use them except at the very first stage, those items can't be freed, and memory is wasted.
+
+If we persist a data structure which directly or indirectly references 1000s or even 100s of thousands of objects (and such data structures are surprisingly common), when all we want to do is access one field of that object, we've wasted Mb of memory completely pointlessly. And God help us if we persist a list of such objects.
+
+The GC is a wonderful tool. But we must be aware of how it works, rather than treating it as a peace of magic, if we are to extract the greatest benefit from it.
