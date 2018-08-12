@@ -11,7 +11,7 @@ The .Net GC is a generational mark-and-sweep garbage collector.
 
 For simplicity we will assume all objects are small, and none are allocated on the large object heap.
 
-All new objects are allowed on an area of memory known as the ephemereal segment. They are automatically given generation 0.
+All new objects are allocated on an area of memory known as the ephemereal segment. They are automatically given generation 0.
 
 The GC will be called by the memory allocator, usually when the ephemereal segment is full.
 
@@ -72,7 +72,7 @@ public class FirstItemGetter<T>
 
 ```
 
-If the only reference to a list is stored in a FirstItemGetter, the List will not be freed. Neither will any of the objects the items in the list reference, nor the objects they reference, etc.
+If the only reference to a list is stored in a FirstItemGetter, the List will not be freed. Neither will any of the objects the items in the list, nor the objects they reference, etc.
 
 This is despite it being impossible to access any object other than the first item in the list. Effectively the memory has leaked.
 
