@@ -18,7 +18,9 @@ Note: I am referring to version 5.0 of the C# specification, as it is the last c
 
 The proposal is to relax the constraint defined in 10.6.4 (override methods):
 >A compile-time error occurs unless all of the following are true for an override declaration: 
+>
 >...
+>
 >The override method and the overridden base method have the same return type. 
 
 The constraint will be similiarly relaxed for implicit interface implementations.
@@ -27,6 +29,15 @@ The constraint will not be relaxed for explicit interface implementations, as to
 
 The "same return type" constraint" is relaxed using a definition similar to 15.2 (delegate compatibility) for the return type:
 >An identity or implicit reference conversion exists from the return type of M to the return type of D.
+
+Thus the new constraint will be
+
+>A compile-time error occurs unless all of the following are true for an override declaration: 
+>
+>...
+>
+>An identity or implicit reference conversion exists from the return type of the override method to the return type of the overriden base method.
+ 
 
 An implicit reference conversion covers all the inheritance-related conversions. It seems OK to me, even if it may be advisable to further restrict this rule by explicitly listing the conversions we want to allow and support. For example we may choose to restrict this to only allow identity conversions. Both designs given in this proposal would work in either case.
 
