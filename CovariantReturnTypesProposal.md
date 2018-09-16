@@ -11,7 +11,7 @@
 7. How Design2 Plays with other .Net code
 8. Design2 Advantages/Disadvantages
 
-### 1. Test Cases
+### 2. Test Cases
 
 **case a - overriding a virtual method**
 ```
