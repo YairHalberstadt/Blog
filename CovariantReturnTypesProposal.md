@@ -13,7 +13,7 @@
 
 ### 1. Test Cases
 
-**case a - overriding virtual method**
+**case a - overriding a virtual method**
 ```
 class Program
 {
@@ -43,7 +43,7 @@ public class Dog : Animal
 }
 ```
 
-**case b overriding abstract method in abstract class**
+**case b - overriding abstract method in abstract class**
 ```
 class Program
 {
@@ -70,7 +70,7 @@ public class Dog : Animal
 }
 ```
 
-**case c overriding a virtual method in an abstract class**
+**case c - overriding a virtual method in an abstract class**
 ```
 class Program
 {
@@ -108,7 +108,7 @@ public class Cat : Animal
 }
 ```
 
-**case d overriding an interface method**
+**case d - overriding an interface method**
 ```
 class Program
 {
@@ -151,7 +151,7 @@ public class Cat : IAnimal
 }
 ```
 
-**case e overriding a covarient override**
+**case e - overriding a covarient override**
 ```
 class Program
 {
@@ -194,7 +194,7 @@ public class StBernard : Dog
 }
 ```
 
-**case f overriding a covarient abstract override**
+**case f - overriding a covarient abstract override**
 ```
 class Program
 {
@@ -237,7 +237,7 @@ public class StBernard : Dog
 }
 ```
 
-** case g - sealed overrides**
+**case g - sealed overrides**
 
 ```
 class Program
