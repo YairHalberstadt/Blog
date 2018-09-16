@@ -2,13 +2,14 @@
 
 ### Contents
 
-1. Test Cases
-2. Design1 (creating a new method as well as overriden method)
-3. How Design1 Plays with other .Net code
-4. Design1 Advantages/Disadvantages
-5. Design2 (using an attribute to indicate the desired return type)
-6. How Design2 Plays with other .Net code
-7. Design2 Advantages/Disadvantages
+1. Description
+2. Test Cases
+3. Design1 (creating a new method as well as a bridging overriding method)
+4. How Design1 Plays with other .Net code
+5. Design1 Advantages/Disadvantages
+6. Design2 (using an attribute to indicate the desired return type)
+7. How Design2 Plays with other .Net code
+8. Design2 Advantages/Disadvantages
 
 ### 1. Test Cases
 
@@ -233,5 +234,190 @@ public class Retriever : Dog
 public class StBernard : Dog
 {
     public override Animal GiveBirth() => new StBernard(); // Should not Compile
+}
+```
+
+** case g - sealed overrides**
+
+```
+class Program
+{
+    static void Main(string[] args)
+    {
+        Dog dog = new Dog();
+        var babyDog = dog.GiveBirth(); // type of var should be DogRetriever
+        Animal animal = dog;
+        var babyAnimal = animal.GiveBirth(); // type of var should be Animal
+        babyAnimal.GetType(); // should be dog
+    }
+}
+
+public class Animal
+{
+    public virtual Animal GiveBirth() => new Animal();
+}
+
+public class Dog : Animal
+{
+    public sealed override Dog GiveBirth() => new Dog(); //Should Compile
+}
+
+public class Poodle : Dog
+{
+    public override Dog GiveBirth() => new Poodle(); // Should not compile
+}
+
+public class Retriever : Dog
+{
+    public override Retriever GiveBirth() => new Retriever(); // Should not Compile
+}
+
+public class Cat : Animal
+{
+    public sealed override Animal GiveBirth() => new Cat();
+}
+
+public class Tiger : Cat
+{
+    public override Tiger GiveBirth() => new Tiger(); // Should not compile
+}
+```
+
+**case h - attribute inheritance**
+
+```
+[AttributeUsage(validOn: AttributeTargets.Method, AllowMultiple = false, Inherited = true)]
+public class InheritedAtrributeSingleInstance : Attribute {
+    public InheritedAtrributeSingleInstance(int id){}
+}
+
+[AttributeUsage(validOn: AttributeTargets.Method, AllowMultiple = true, Inherited = true)]
+public class InheritedAtrributeMultipleInstance : Attribute {
+    public InheritedAtrributeMultipleInstance(int id) { }
+}
+
+[AttributeUsage(validOn: AttributeTargets.Method, AllowMultiple = false, Inherited = false)]
+public class NonInheritedAtrributeSingleInstance : Attribute {
+    public NonInheritedAtrributeSingleInstance(int id) { }
+}
+
+public class Animal
+{
+    [InheritedAtrributeSingleInstance(0)]
+    [InheritedAtrributeMultipleInstance(0)]
+    [NonInheritedAtrributeSingleInstance(0)]
+    public virtual Animal GiveBirth() => new Animal();
+}
+
+public class Dog : Animal
+{
+    /* Should have following Attributes
+     * [InheritedAtrributeSingleInstance(0)]
+     * [InheritedAtrributeMultipleInstance(0)]
+     */
+    public override Dog GiveBirth() => new Dog();
+}
+
+public class Poodle : Dog
+{
+    /* Should have following Attributes
+     * [InheritedAtrributeSingleInstance(0)]
+     * [InheritedAtrributeMultipleInstance(0)]
+     */
+    public override Dog GiveBirth() => new Poodle(); 
+}
+
+public class Retriever : Dog
+{
+    /* Should have following Attributes
+     * [InheritedAtrributeSingleInstance(0)]
+     * [InheritedAtrributeMultipleInstance(0)]
+     */
+    public override Retriever GiveBirth() => new Retriever();
+}
+
+public class StBernard : Dog
+{
+    [InheritedAtrributeMultipleInstance(1)]
+    [InheritedAtrributeSingleInstance(1)]
+    /* Should have following Attributes
+     * [InheritedAtrributeSingleInstance(1)]
+     * [InheritedAtrributeMultipleInstance(1)]
+     * [InheritedAtrributeMultipleInstance(0)]
+     */
+    public override StBernard GiveBirth() => new StBernard();
+}
+
+public class Collie : Dog
+{
+    [InheritedAtrributeMultipleInstance(1)]
+    [InheritedAtrributeSingleInstance(1)]
+    /* Should have following Attributes
+     * [InheritedAtrributeSingleInstance(1)]
+     * [InheritedAtrributeMultipleInstance(1)]
+     * [InheritedAtrributeMultipleInstance(0)]
+     */
+    public override Dog GiveBirth() => new Collie();
+}
+
+public class Cat : Animal
+{
+    
+    [InheritedAtrributeMultipleInstance(1)]
+    [InheritedAtrributeSingleInstance(1)]
+    [NonInheritedAtrributeSingleInstance(1)]
+    /* Should have following Attributes
+     * [InheritedAtrributeSingleInstance(1)]
+     * [InheritedAtrributeMultipleInstance(1)]
+     * [InheritedAtrributeMultipleInstance(0)]
+     * [NonInheritedAtrributeSingleInstance(1)]
+     */
+    public sealed override Cat GiveBirth() => new Cat();
+}
+
+public class Tiger : Cat
+{
+    /* Should have following Attributes
+     * [InheritedAtrributeSingleInstance(1)]
+     * [InheritedAtrributeMultipleInstance(1)]
+     * [InheritedAtrributeMultipleInstance(0)]
+     */
+    public override Tiger GiveBirth() => new Tiger();
+}
+
+public class Leopard : Cat
+{
+    /* Should have following Attributes
+     * [InheritedAtrributeSingleInstance(1)]
+     * [InheritedAtrributeMultipleInstance(1)]
+     * [InheritedAtrributeMultipleInstance(0)]
+     */
+    public override Cat GiveBirth() => new Leopard();
+}
+
+public class Cheetah : Cat
+{
+    [InheritedAtrributeMultipleInstance(2)]
+    [InheritedAtrributeSingleInstance(2)]
+    /* Should have following Attributes
+     * [InheritedAtrributeSingleInstance(2)]
+     * [InheritedAtrributeMultipleInstance(2)]
+     * [InheritedAtrributeMultipleInstance(1)]
+     * [InheritedAtrributeMultipleInstance(0)]
+     */
+    public override Cheetah GiveBirth() => new Cheetah();
+}
+
+public class Jaguar : Cat
+{
+    [InheritedAtrributeMultipleInstance(2)]
+    [InheritedAtrributeSingleInstance(2)]
+    /* Should have following Attributes
+     * [InheritedAtrributeSingleInstance(2)]
+     * [InheritedAtrributeMultipleInstance(2)]
+     * [InheritedAtrributeMultipleInstance(1)]
+     * [InheritedAtrributeMultipleInstance(0)]
+     */
+    public override Cat GiveBirth() => new Jaguar();
 }
 ```
