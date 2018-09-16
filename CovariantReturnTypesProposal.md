@@ -26,7 +26,7 @@ The constraint will be similiarly relaxed for implicit interface implementations
 The constraint will not be relaxed for explicit interface implementations, as to do so would make no difference to consuming code.
 
 The "same return type" constraint" is relaxed using a definition similar to 15.2 (delegate compatibility) for the return type:
-•	An identity or implicit reference conversion exists from the return type of M to the return type of D.
+>An identity or implicit reference conversion exists from the return type of M to the return type of D.
 
 An implicit reference conversion covers all the inheritance-related conversions. It seems OK to me, even if it may be advisable to further restrict this rule by explicitly listing the conversions we want to allow and support. For example we may choose to restrict this to only allow identity conversions. Both designs given in this proposal would work in either case.
 
