@@ -10,6 +10,7 @@
 6. Design2 (using an attribute to indicate the desired return type)
 7. How Design2 Plays with other .Net code
 8. Design2 Advantages/Disadvantages
+9. Personal Conclusions
 
 ### 1. Description
 
