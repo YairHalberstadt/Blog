@@ -507,12 +507,7 @@ public abstract class Factory<T>
 
 public abstract class DerivedFactory<TDerived, TBase> : Factory<TBase> where TDerived : TBase
 {
-    /*
-     * This is arguable whether we want to allow this to compile.
-     * Whilst it makes sense, currently a Func<TDerived> cannot be cast to a Func<TBase> as such I would vote aginst this.
-     * However, if it ever becomes possible to cast a Func<TDerived> to a Func<TBase> we should reconsider.
-     */
-    public abstract override TDerived Create();
+    public abstract override TDerived Create(); //Should Compile
 }
 
 public class Animal
