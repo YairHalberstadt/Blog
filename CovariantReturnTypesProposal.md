@@ -451,3 +451,80 @@ public class Jaguar : Cat
     public override Cat GiveBirth() => new Jaguar();
 }
 ```
+
+**case i - creating a Delegate type**
+
+```
+class Program
+{
+    static void Main(string[] args)
+    {
+        var dog = new Dog();
+        Func<Dog> dogFunc = dog.GiveBirth; //should compile
+        var babyDog = FunctionApplier(dog.GiveBirth); //type of var should be Dog
+    }
+
+    static T FunctionApplier<T>(Func<T> func) => func();
+}
+
+public class Animal
+{
+    public virtual Animal GiveBirth() => new Animal();
+}
+
+public class Dog : Animal
+{
+    public override Dog GiveBirth() => new Dog();
+}
+```
+
+**case j - implementing an interface which requires the more derived return type**
+
+```
+public interface IDog
+{
+    Dog GiveBirth();
+}
+
+public class Animal
+{
+    public virtual Animal GiveBirth() => new Animal();
+}
+
+public class Dog : Animal, IDog //Should Compile
+{
+    public override Dog GiveBirth() => new Dog();
+}
+```
+
+**case k - Generic return types**
+
+```
+public abstract class Factory<T>
+{
+    public abstract T Create();
+}
+
+public abstract class DerivedFactory<TDerived, TBase> : Factory<TBase> where TDerived : TBase
+{
+    /*
+     * This is arguable whether we want to allow this to compile.
+     * Whilst it makes sense, currently a Func<TDerived> cannot be cast to a Func<TBase> as such I would vote aginst this.
+     * However, if it ever becomes possible to cast a Func<TDerived> to a Func<TBase> we should reconsider.
+     */
+    public abstract override TDerived Create();
+}
+
+public class Animal
+{
+}
+
+public class Dog : Animal
+{
+}
+
+public class DogFactory : Factory<Animal>
+{
+    public override Dog Create() => new Dog(); //should compile
+}
+```
