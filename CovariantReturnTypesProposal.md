@@ -43,6 +43,8 @@ An implicit reference conversion covers all the inheritance-related conversions.
 
 ### 2. Test Cases
 
+Note that all of thse test cases should be repeated for cases where the virtual method has any number of parameters.
+
 **case a - overriding a virtual method**
 ```
 class Program
@@ -523,3 +525,45 @@ public class DogFactory : Factory<Animal>
     public override Dog Create() => new Dog(); //should compile
 }
 ```
+
+### 3. Design1 (creating a new method as well as a bridging overriding method)
+
+#### Central Idea
+
+Consider the code from test case a once more:
+```
+public class Animal
+{
+    public virtual Animal GiveBirth() => new Animal();
+}
+
+public class Dog : Animal
+{
+    public override Dog GiveBirth() => new Dog();
+}
+```
+
+In IL it is possible to override a method with a differently named method.
+Hence in the IL for class Dog we create a private sealed method GiveBirth'() that overrides Animal.GiveBirth();
+GiveBirth' calls a new virtual method GiveBirth() that returns a Dog.
+
+Hence code calling Dog.GiveBirth() will call the new virtual method that returns a Dog.
+
+This is similiar to a technique already used to achieve Covariant return types with interfaces:
+```
+public interface IAnimal
+{
+    Animal GiveBirth();
+}
+
+public class Dog : IAnimal
+{
+    public Dog GiveBirth() => new Dog();
+    
+    Animal Animal.GiveBirth() => GiveBirth();
+}
+```
+
+#### Generated IL for all Test Cases
+
+**case a**
