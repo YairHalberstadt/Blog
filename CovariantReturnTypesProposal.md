@@ -47,7 +47,7 @@ An implicit reference conversion covers all the inheritance-related conversions.
 Note that all of thse test cases should be repeated for cases where the virtual method has any number of parameters.
 
 **case a - overriding a virtual method**
-```
+```csharp
 class Program
 {
     static void Main(string[] args)
@@ -77,7 +77,7 @@ public class Dog : Animal
 ```
 
 **case b - overriding abstract method in abstract class**
-```
+```csharp
 class Program
 {
     static void Main(string[] args)
@@ -104,7 +104,7 @@ public class Dog : Animal
 ```
 
 **case c - overriding a virtual method in an abstract class**
-```
+```csharp
 class Program
 {
     static void Main(string[] args)
@@ -142,7 +142,7 @@ public class Cat : Animal
 ```
 
 **case d - overriding an interface method**
-```
+```csharp
 class Program
 {
     static void Main(string[] args)
@@ -185,7 +185,7 @@ public class Cat : IAnimal
 ```
 
 **case e - overriding a covarient override**
-```
+```csharp
 class Program
 {
     static void Main(string[] args)
@@ -228,7 +228,7 @@ public class StBernard : Dog
 ```
 
 **case f - overriding a covarient abstract override**
-```
+```csharp
 class Program
 {
     static void Main(string[] args)
@@ -272,7 +272,7 @@ public class StBernard : Dog
 
 **case g - sealed overrides**
 
-```
+```csharp
 class Program
 {
     static void Main(string[] args)
@@ -318,7 +318,7 @@ public class Tiger : Cat
 
 **case h - attribute inheritance**
 
-```
+```csharp
 [AttributeUsage(validOn: AttributeTargets.Method, AllowMultiple = false, Inherited = true)]
 public class InheritedAtrributeSingleInstance : Attribute {
     public InheritedAtrributeSingleInstance(int id){}
@@ -457,7 +457,7 @@ public class Jaguar : Cat
 
 **case i - creating a Delegate type**
 
-```
+```csharp
 class Program
 {
     static void Main(string[] args)
@@ -483,7 +483,7 @@ public class Dog : Animal
 
 **case j - implementing an interface which requires the more derived return type**
 
-```
+```csharp
 public interface IDog
 {
     Dog GiveBirth();
@@ -502,7 +502,7 @@ public class Dog : Animal, IDog //Should Compile
 
 **case k - Generic return types**
 
-```
+```csharp
 public abstract class Factory<T>
 {
     public abstract T Create();
@@ -532,7 +532,7 @@ public class DogFactory : Factory<Animal>
 #### Central Idea
 
 Consider the code from test case a once more:
-```
+```csharp
 public class Animal
 {
     public virtual Animal GiveBirth() => new Animal();
@@ -551,7 +551,7 @@ GiveBirth' calls a new virtual method GiveBirth() that returns a Dog.
 Hence code calling Dog.GiveBirth() will call the new virtual method that returns a Dog.
 
 This is similiar to a technique already used to achieve Covariant return types with interfaces:
-```
+```csharp
 public interface IAnimal
 {
     Animal GiveBirth();
@@ -570,7 +570,7 @@ public class Dog : IAnimal
 Note all IL has been tested using https://www.tutorialspoint.com/compile_ilasm_online.php
 
 **case a**
-```
+```csharp
 .assembly Covariant {}
 .assembly extern mscorlib {}
 .class private auto ansi beforefieldinit Program
