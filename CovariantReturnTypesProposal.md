@@ -680,8 +680,8 @@ Note all IL has been tested using https://www.tutorialspoint.com/compile_ilasm_o
     .method private hidebysig virtual final
         instance class Animal Animal_GiveBirth () cil managed 
     {
-		.override Animal::GiveBirth
-		.maxstack  8
+        .override Animal::GiveBirth
+        .maxstack  8
         .locals init (object V_0)
 
         IL_0000:  nop
@@ -691,16 +691,16 @@ Note all IL has been tested using https://www.tutorialspoint.com/compile_ilasm_o
         IL_0009:  ret
     } // end of method Dog::Animal_GiveBirth
 
-	.method public hidebysig newslot virtual 
+    .method public hidebysig newslot virtual 
         instance class Dog GiveBirth() cil managed
-	{
-		// Method begins at RVA 0x2060
-		// Code size 6 (0x6)
+    {
+        // Method begins at RVA 0x2060
+        // Code size 6 (0x6)
         .maxstack 8
 
         IL_0000: newobj instance void Dog::.ctor()
         IL_0005: ret
-	}// end of method Dog::GiveBirth
+    }// end of method Dog::GiveBirth
 
     .method public hidebysig specialname rtspecialname 
         instance void .ctor () cil managed 
