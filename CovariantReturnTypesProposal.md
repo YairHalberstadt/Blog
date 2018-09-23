@@ -1216,4 +1216,119 @@ Until `Dog.GiveBirth()` is recompiled whilst referencing the new assembly, it wo
 
 In short, adding an Inherited attribute to a public virtual method can now potentially be a Binary (but not Source) breaking change.
 
-#### Potential Long Term Solution to disadvantages 4 and 5
+#### Potential Long Term Solution to disadvantages 3, 4 and 5
+
+It is important that when we compile to IL we don't lose the information that a method overrides another method. As such I think it is neccessary to create an attribute to store that information, which the compiler will automatically insert.
+
+The Attribute could look something like this:
+
+```csharp
+[AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = true)]
+public class CovariantOverideAttribute : Attribute
+{
+    public CovariantOverideAttribute(Type baseType, string baseMethodName)
+    {
+        BaseMethod = baseType.GetMethod(baseMethodName);
+    }
+
+    public MethodInfo BaseMethod { get; }
+}
+```
+
+Then it could be inserted into the IL as follows:
+
+```csharp
+.class public auto ansi beforefieldinit Animal
+    extends [mscorlib]System.Object
+{
+    // Methods
+    .method public hidebysig newslot virtual 
+        instance class Animal GiveBirth () cil managed 
+    {
+        // Method begins at RVA 0x2050
+        // Code size 6 (0x6)
+        .maxstack 8
+
+        IL_0000: newobj instance void Animal::.ctor()
+        IL_0005: ret
+    } // end of method Animal::GiveBirth
+
+    .method public hidebysig specialname rtspecialname 
+        instance void .ctor () cil managed 
+    {
+        // Method begins at RVA 0x2057
+        // Code size 8 (0x8)
+        .maxstack 8
+
+        IL_0000: ldarg.0
+        IL_0001: call instance void [mscorlib]System.Object::.ctor()
+        IL_0006: nop
+        IL_0007: ret
+    } // end of method Animal::.ctor
+
+} // end of class Animal
+
+.class public auto ansi beforefieldinit Dog
+    extends Animal
+{
+    // Methods
+    .method private hidebysig virtual final
+        instance class Animal Animal_GiveBirth () cil managed 
+    {
+        .override Animal::GiveBirth
+        .maxstack  8
+        .locals init (object V_0)
+
+        IL_0000:  nop
+        IL_0001:  ldarg.0
+        IL_0002:  tail.
+        IL_0004:  callvirt   instance class Dog Dog::GiveBirth()
+        IL_0009:  ret
+    } // end of method Dog::Animal_GiveBirth
+
+    .method public hidebysig newslot virtual 
+        instance class Dog GiveBirth() cil managed
+    {
+        .custom instance void CovariantOverideAttribute::.ctor(class [mscorlib]System.Type, string) = (
+            01 00 06 41 6e 69 6d 61 6c 09 47 69 76 65 42 69
+            72 74 68 00 00
+        )
+        // Method begins at RVA 0x2060
+        // Code size 6 (0x6)
+        .maxstack 8
+
+        IL_0000: newobj instance void Dog::.ctor()
+        IL_0005: ret
+    }// end of method Dog::GiveBirth
+
+    .method public hidebysig specialname rtspecialname 
+        instance void .ctor () cil managed 
+    {
+        // Method begins at RVA 0x2067
+        // Code size 8 (0x8)
+        .maxstack 8
+
+        IL_0000: ldarg.0
+        IL_0001: call instance void Animal::.ctor()
+        IL_0006: nop
+        IL_0007: ret
+    } // end of method Dog::.ctor
+
+} // end of class Dog
+```
+
+This gives the oppurtunity for other parts of .Net framework to access this information in the future. This means that in the long run it may be possible to solve disadvantages 3,4, and 5.
+
+The advantage of these solutions is that although they require changes to the runtime, standard library, tooling etc. this work is completely distinct to any work done for the core feature. As such, whether and when these updates are carried out does not preclude the introduction of Covariant Return Types into the C# language via changes in Roslyn. In fact, so long as the attribute is defined first, the work could even take place before any work is done on Roslyn - it is completely distinct work.
+
+**Solving disadvantage 3**
+
+It may be possible for the libraries used to produce the stack trace, or the tools that consume the stack trace, to use this attribute to skip the bridging method, and show a cleaned stack trace where the covariant override is called directly.
+
+**Solving disadvantage 4**
+
+It may be possible for System.Reflection to use this attribute to generate a MethodInfo that is aware that the covariant override method overrides a base method. Alternatively, an extra method or extension method could be added to MethodInfo, `GetCovariantOverrideBaseMethod` which will return the correct method.
+
+**Solving disadvaantage 5**
+When loading an assembly,the runtime could run through the ILasm, adding or removing attributes as neccessary whenever it finds the `CovariantOverrideAttribute`. Alternatively, to avoid changes in the runtime, a tool could be created to do the same directly to a dll. This tool could then be run at any stage to make sure the Attributes are up to date, for example when running a Nuget Restore, or when compiling an executable.
+
