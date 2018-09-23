@@ -151,10 +151,10 @@ class Program
         var babyCat = cat.GiveBirth(); // type of var should be Cat
         babyCat.GetType(); // should be Cat
         Cat babyCat2 = cat.GiveBirth(); // should compile
-	      IAnimal animal = cat;
+        IAnimal animal = cat;
         var babyAnimal = animal.GiveBirth(); // type of var should be IAnimal
         babyAnimal.GetType(); // should be Dog
-	      Dog dog = new Dog();
+        Dog dog = new Dog();
         Dog babyDog = dog.GiveBirth(); // should compile
         var babyDog2 = dog.GiveBirth(); // type of var should be Dog
         babyDog2.GetType(); // should be Dog
@@ -176,7 +176,7 @@ public class Dog : IAnimal
 
 public class Cat : IAnimal
 {
-    Cat IAnimal.GiveBirth() => new Cat(); // Should not Compile
+    //Cat IAnimal.GiveBirth() => new Cat(); // Should not Compile
 
     IAnimal IAnimal.GiveBirth() => new Dog(); // Should Compile
 
@@ -221,10 +221,10 @@ public class Retriever : Dog
     public override Retriever GiveBirth() => new Retriever(); // Should Compile
 }
 
-public class StBernard : Dog
-{
-    public override Animal GiveBirth() => new StBernard(); // Should not Compile
-}
+//public class StBernard : Dog
+//{
+//    public override Animal GiveBirth() => new StBernard(); // Should not Compile
+//}
 ```
 
 **case f - overriding a covarient abstract override**
@@ -264,10 +264,10 @@ public class Retriever : Dog
     public override Retriever GiveBirth() => new Retriever(); // Should Compile
 }
 
-public class StBernard : Dog
-{
-    public override Animal GiveBirth() => new StBernard(); // Should not Compile
-}
+//public class StBernard : Dog
+//{
+//    public override Animal GiveBirth() => new StBernard(); // Should not Compile
+//}
 ```
 
 **case g - sealed overrides**
@@ -297,12 +297,12 @@ public class Dog : Animal
 
 public class Poodle : Dog
 {
-    public override Dog GiveBirth() => new Poodle(); // Should not compile
+    //public override Dog GiveBirth() => new Poodle(); // Should not compile
 }
 
 public class Retriever : Dog
 {
-    public override Retriever GiveBirth() => new Retriever(); // Should not Compile
+    //public override Retriever GiveBirth() => new Retriever(); // Should not Compile
 }
 
 public class Cat : Animal
@@ -312,7 +312,7 @@ public class Cat : Animal
 
 public class Tiger : Cat
 {
-    public override Tiger GiveBirth() => new Tiger(); // Should not compile
+    //public override Tiger GiveBirth() => new Tiger(); // Should not compile
 }
 ```
 
@@ -882,7 +882,7 @@ public class Dog : IAnimal
 }
 ```
 
-Here is the generated IL:
+Here is the generated IL for the test case:
 
 ```csharp
 .assembly Covariant { }
