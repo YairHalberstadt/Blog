@@ -1068,3 +1068,152 @@ Here is the generated IL for the test case:
 } // end of class Cat
 
 ```
+
+### 4. How Design1 Plays with other .Net code
+
+One of the chief advantages of Design1 is that all changes occur at the point where the IL for the covariant return type is produced, and there are no changes at all required in consuming code.
+
+As such this Design will produce IL that is equally compatible with VB.net, F#, and older versions of C# as it will be with newer versions of C#.
+
+This can be, and has been, tested right now by handwriting assemblies using this design, and calling these handwritten assemblies from other projects. They work exactly as expected, and whats more intellisense and object explorer both work fine.
+
+As will be discussed in the next section, in the long run it may be advantageous to introduce changes in the runtime, tooling, core library, etc. to make this feature work more smoothly. Obviously code running on older runtimes wont be able to benefit from these features. However, as will be explained, these are not core parts of the feature, and as such I don't see this as a problem.
+
+### 5. Design1 Advantages/Disadvantages
+
+#### Advantages
+
+**1. Requires only local changes**
+
+The only place where any changes will have to be made to the compiler are when compiling overriding methods with covariant return types. As such this minimises the impact of the change.
+
+**2. Fully Backwards Compatible**
+
+As discussed in Section 4. there is no need for consuming code to be aware of this feature. As such older versions of C#, as well as other .Net languages can consume code using this feature in exactly the same way as the new version of C#.
+
+**3. Avoids Boxing**
+
+In the past Code such as this would have had to be written
+
+```csharp
+public class Producer
+{
+    public virtual object Produce() => new object();
+}
+
+public class Int32Producer : Producer
+{
+    public override object Produce() => 42;
+}
+
+class Program
+{
+    static void Main(string[] args)
+    {
+         int number = (int) new Int32Producer().Produce();
+    }
+}
+```
+This leads to the boxing and unboxing of `42` which can lead to performance issues and stress on the garbage collector.
+
+Whereas now this can be written
+
+```csharp
+public class Producer
+{
+    public virtual object Produce() => new object();
+}
+
+public class Int32Producer : Producer
+{
+    public override int Produce() => 42;
+}
+
+class Program
+{
+    static void Main(string[] args)
+    {
+         int number = new Int32Producer().Produce();
+    }
+}
+```
+
+Under Design1 no boxing or unboxing occurs.
+
+**4. Increased Type Safety**
+
+As seen in the above example, there can be cases where code which preiously could not be statically checked to be type safe, and required downcasting, can now be statically type checked.
+
+#### Disadvantages
+
+**1. Hides Complexity**
+
+This makes it appear as if a method is an override of another method, when actually it is not, and we just make it *act* as if it is one using various tricks. As such it may be argued that we are hiding what is actually happening from the developer, which in some cases (as we shall see) may lead to unexpected results. Rather it may be better if give the developer more control over what happens instead, so he can generate similiar IL himself, but using C# code that makes it clearer what is happening internally. One way to do that may be to allow C# to override a method explicitly, similiarly to explicit interface implementations.
+
+**2. Performance issues**
+
+This design leads to an extra function call when calling the base method, which is dificult to inline unless the covariant override is marked as sealed. Whilst this would not make much of a difference to large functions, it could lead to performance issues for small functions.
+
+**3. Extra method call appears in the call stack**
+
+This design leads to an extra function call when calling the base method. This will lead to an extra function call in the call stack, which may be confusing for the developer.
+
+**4. Reflection wont pick up this is an override of the base method**
+
+Reflection wont indicate that the covariant override is an override of the base method. For example:
+
+```csharp
+class Program
+{
+    static void Main(string[] args)
+    {
+         var t = typeof(Dog);
+	 var method = t.GetMethod("GiveBirth");
+	 Console.WriteLine(IsOverride(method)); // returns false, not true as might be expected.
+    }
+    
+    public static bool IsOverride(MethodInfo m) 
+    {
+        return m.GetBaseDefinition().ReflectedType != m.ReflectedType;
+    }
+}
+
+
+public class Animal
+{
+    public virtual Animal GiveBirth() => new Animal();
+}
+
+public class Dog : Animal
+{
+    public override Dog GiveBirth() => new Dog(); //Should Compile
+}
+```
+
+**5. Adding Attributes to the base method requires recompiling covariant override**
+Consider the following code
+
+```csharp
+\\Assembly 1
+public class Animal
+{
+    [SomeInheritedAttribute]
+    public virtual Animal GiveBirth() => new Animal();
+}
+
+\\Assembly 2
+public class Dog : Animal
+{
+    public override Dog GiveBirth() => new Dog(); //Should Compile
+}
+```
+
+When Assembly 2 is compiled `SomeInheritedAttribute` is applied to `Dog.GiveBirth()` by the compiler.
+
+Now lets say `AnotherInheritedAttribute` is added to Animal.GiveBirth(), or `SomeInheritedAttribute` is removed.
+
+Until `Dog.GiveBirth()` is recompiled whilst referencing the new assembly, it wont be aware of these changes, and so its attributes will be incorrect. It also means that it will be impossible to use the same version of Assembly 2 with different versions of Assembly 1, and still have the attributes for Dog.GiveBirth() be correct.
+
+In short, adding an Inherited attribute to a public virtual method can now potentially be a Binary (but not Source) breaking change.
+
+#### Potential Long Term Solution to disadvantages 4 and 5
