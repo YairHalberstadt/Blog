@@ -1380,6 +1380,7 @@ Note all IL has been tested using https://www.tutorialspoint.com/compile_ilasm_o
 
 **case a**
 
+```csharp
 .assembly Covariant {}
 .assembly extern mscorlib {}
 .class private auto ansi beforefieldinit Program
