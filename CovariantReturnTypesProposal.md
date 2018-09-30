@@ -2,15 +2,18 @@
 
 ### Contents
 
-1. Description
-2. Test Cases
-3. Design1 (creating a new method as well as a bridging overriding method)
-4. How Design1 Plays with other .Net code
-5. Design1 Advantages/Disadvantages
-6. Design2 (using an attribute to indicate the desired return type)
-7. How Design2 Plays with other .Net code
-8. Design2 Advantages/Disadvantages
-9. Personal Conclusions
+1.  Description
+2.  Test Cases
+3.  Design1 (creating a new method as well as a bridging overriding method)
+4.  How Design1 plays with other .Net code
+5.  Design1 Advantages/Disadvantages
+6.  Design2 (using an attribute to indicate the desired return type)
+7.  How Design2 plays with other .Net code
+8.  Design2 Advantages/Disadvantages
+9.  Design3 (explicit virtual method overrides)
+10. How Design3 plays with other .Net code
+11. Design 3 Advantages/Disadvantages
+12. Personal Conclusions
 
 ### 1. Description
 
@@ -38,9 +41,6 @@ Thus the new constraint will be
 >...
 >
 >An identity or implicit reference conversion exists from the return type of the override method to the return type of the overriden base method.
- 
-
-An implicit reference conversion covers all the inheritance-related conversions. It seems OK to me, even if it may be advisable to further restrict this rule by explicitly listing the conversions we want to allow and support. For example we may choose to restrict this to only allow identity conversions. Both designs given in this proposal would work in either case.
 
 ### 2. Test Cases
 
@@ -1332,3 +1332,189 @@ It may be possible for System.Reflection to use this attribute to generate a Met
 **Solving disadvantage 5**
 When loading an assembly,the runtime could run through the ILasm, adding or removing attributes as neccessary whenever it finds the `CovariantOverrideAttribute`. Alternatively, to avoid changes in the runtime, a tool could be created to do the same directly to a dll. This tool could then be run at any stage to make sure the Attributes are up to date, for example when running a Nuget Restore, or when creating an executable.
 
+### 6.  Design2 (using an attribute to indicate the desired return type)
+
+Under this design an override with a covariant return type is compiled to an IL method with the same return type as its base method. However an attribute is added to the method which indicates the actual return type of the object. Consuming code then explicitly casts the object returned from the method to the type indicated by the Attribute.
+
+This would only work for conversions which can be safely reversed. However by definition identity and implicit reference conversions do not change the object being referenced, so this is not an issue.
+
+#### Prototype Attribute
+
+Here is an example of the attribute that could be used, and which we will be using in all the examples of emited IL for the test cases:
+
+```csharp
+[AttributeUsage(AttributeTargets.Method,AllowMultiple =false,Inherited =true)]
+public class ReturnTypeAttribute : Attribute
+{
+    public ReturnTypeAttribute(Type returnType)
+    {
+        ReturnType = returnType;
+    }
+
+    public Type ReturnType { get; }
+}
+```
+
+Roslyn will then detect this attribute when compiling code that calls a method with this attribute, and then cast the object returned from the method to the type contained in the attribute.
+
+An obvious optimisation is to combine both casts into one when the returned object undergoes another implicit reference conversion, or even to remove the cast completely:
+
+```csharp
+[ReturnType(typeof(int)]
+public object Method() => default(int);
+
+...
+
+int a = Method(); \\ converted to int a = (int)Method();
+
+ValueType b = Method(); \\ converted to ValueType b = (ValueType)Method();
+
+object c = Method(); \\ converted to object c = Method();
+
+var d = Method(); \\ converted to int d = (int)Method();
+```
+
+#### Generated IL for all Test Cases
+
+Note all IL has been tested using https://www.tutorialspoint.com/compile_ilasm_online.php
+
+**case a**
+
+.assembly Covariant {}
+.assembly extern mscorlib {}
+.class private auto ansi beforefieldinit Program
+    extends [mscorlib]System.Object
+{
+    // Methods
+    .method private hidebysig static 
+        void Main (
+            string[] args
+        ) cil managed 
+    {
+        // Method begins at RVA 0x2050
+        // Code size 81 (0x51)
+        .maxstack 1
+        .locals init (
+            [0] class Animal,
+            [1] class Animal,
+            [2] class Dog,
+            [3] class Dog,
+            [4] class Dog,
+            [5] class Animal,
+            [6] class Animal
+        )
+
+        IL_0000: nop
+        IL_0001: newobj instance void Animal::.ctor()
+        IL_0006: stloc.0
+        IL_0007: ldloc.0
+        IL_0008: callvirt instance class Animal Animal::GiveBirth()
+        IL_000d: stloc.1
+        IL_000e: ldloc.1
+        IL_000f: callvirt instance class [mscorlib]System.Type [mscorlib]System.Object::GetType()
+        IL_0014: pop
+        IL_0015: newobj instance void Dog::.ctor()
+        IL_001a: stloc.2
+        IL_001b: ldloc.2
+        IL_001c: callvirt instance class Animal Animal::GiveBirth()
+        IL_0021: castclass Dog
+        IL_0026: stloc.3
+        IL_0027: ldloc.2
+        IL_0028: callvirt instance class Animal Animal::GiveBirth()
+        IL_002d: castclass Dog
+        IL_0032: stloc.s 4
+        IL_0034: ldloc.s 4
+        IL_0036: callvirt instance class [mscorlib]System.Type [mscorlib]System.Object::GetType()
+        IL_003b: pop
+        IL_003c: ldloc.2
+        IL_003d: stloc.s 5
+        IL_003f: ldloc.s 5
+        IL_0041: callvirt instance class Animal Animal::GiveBirth()
+        IL_0046: stloc.s 6
+        IL_0048: ldloc.s 6
+        IL_004a: callvirt instance class [mscorlib]System.Type [mscorlib]System.Object::GetType()
+        IL_004f: pop
+        IL_0050: ret
+    } // end of method Program::Main
+
+    .method public hidebysig specialname rtspecialname 
+        instance void .ctor () cil managed 
+    {
+        // Method begins at RVA 0x20ad
+        // Code size 8 (0x8)
+        .maxstack 8
+
+        IL_0000: ldarg.0
+        IL_0001: call instance void [mscorlib]System.Object::.ctor()
+        IL_0006: nop
+        IL_0007: ret
+    } // end of method Program::.ctor
+
+} // end of class Program
+
+.class public auto ansi beforefieldinit Animal
+    extends [mscorlib]System.Object
+{
+    // Methods
+    .method public hidebysig newslot virtual 
+        instance class Animal GiveBirth () cil managed 
+    {
+        // Method begins at RVA 0x20b6
+        // Code size 6 (0x6)
+        .maxstack 8
+
+        IL_0000: newobj instance void Animal::.ctor()
+        IL_0005: ret
+    } // end of method Animal::GiveBirth
+
+    .method public hidebysig specialname rtspecialname 
+        instance void .ctor () cil managed 
+    {
+        // Method begins at RVA 0x20ad
+        // Code size 8 (0x8)
+        .maxstack 8
+
+        IL_0000: ldarg.0
+        IL_0001: call instance void [mscorlib]System.Object::.ctor()
+        IL_0006: nop
+        IL_0007: ret
+    } // end of method Animal::.ctor
+
+} // end of class Animal
+
+.class public auto ansi beforefieldinit Dog
+    extends Animal
+{
+    // Methods
+    .method public hidebysig virtual 
+        instance class Animal GiveBirth () cil managed 
+    {
+        .custom instance void ReturnTypeAttribute::.ctor(class [mscorlib]System.Type) = (
+            01 00 03 44 6f 67 00 00
+        )
+        // Method begins at RVA 0x20bd
+        // Code size 6 (0x6)
+        .maxstack 8
+
+        IL_0000: newobj instance void Dog::.ctor()
+        IL_0005: ret
+    } // end of method Dog::GiveBirth
+
+    .method public hidebysig specialname rtspecialname 
+        instance void .ctor () cil managed 
+    {
+        // Method begins at RVA 0x20c4
+        // Code size 8 (0x8)
+        .maxstack 8
+
+        IL_0000: ldarg.0
+        IL_0001: call instance void Animal::.ctor()
+        IL_0006: nop
+        IL_0007: ret
+    } // end of method Dog::.ctor
+
+} // end of class Dog
+
+```
+
+**case b**
