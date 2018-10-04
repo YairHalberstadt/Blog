@@ -680,9 +680,10 @@ Note all IL has been tested using https://www.tutorialspoint.com/compile_ilasm_o
     .method private final hidebysig virtual 
         instance class Animal Animal.GiveBirth () cil managed 
     {
+    
+        .override Animal::GiveBirth
         // Method begins at RVA 0x2058
         // Code size 7 (0x7)
-        .override Animal::GiveBirth
         .maxstack  8
         .locals init (object V_0)
 
@@ -973,6 +974,8 @@ Note all IL has been tested using https://www.tutorialspoint.com/compile_ilasm_o
     .method private final hidebysig virtual 
         instance class Animal Animal.GiveBirth () cil managed 
     {
+    
+        .override Animal::GiveBirth
         // Method begins at RVA 0x20c8
         // Code size 7 (0x7)
         .maxstack 8
@@ -1350,6 +1353,8 @@ Here is the generated IL for the test case:
     .method private final hidebysig virtual 
         instance class Animal Animal.GiveBirth () cil managed 
     {
+    
+        .override Animal::GiveBirth
         // Method begins at RVA 0x209f
         // Code size 7 (0x7)
         .maxstack 8
@@ -1422,6 +1427,8 @@ Here is the generated IL for the test case:
     .method private final hidebysig virtual 
         instance class Animal Animal.GiveBirth () cil managed 
     {
+    
+        .override Animal::GiveBirth
         // Method begins at RVA 0x209f
         // Code size 7 (0x7)
         .maxstack 8
@@ -1434,6 +1441,8 @@ Here is the generated IL for the test case:
     .method private final hidebysig virtual 
         instance class Dog Dog.GiveBirth () cil managed 
     {
+    
+        .override Dog::GiveBirth
         // Method begins at RVA 0x20c7
         // Code size 7 (0x7)
         .maxstack 8
