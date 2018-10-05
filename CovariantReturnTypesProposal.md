@@ -12,7 +12,7 @@
 8.  Design2 Advantages/Disadvantages
 9.  Design3 (explicit virtual method overrides)
 10. How Design3 plays with other .Net code
-11. Design 3 Advantages/Disadvantages
+11. Design3 Advantages/Disadvantages
 12. Personal Conclusions
 
 ### 1. Description
