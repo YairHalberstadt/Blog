@@ -295,25 +295,25 @@ public class Dog : Animal
     public sealed override Dog GiveBirth() => new Dog(); //Should Compile
 }
 
-public class Poodle : Dog
-{
-    //public override Dog GiveBirth() => new Poodle(); // Should not compile
-}
+//public class Poodle : Dog
+//{
+//    public override Dog GiveBirth() => new Poodle(); // Should not compile
+//}
 
-public class Retriever : Dog
-{
-    //public override Retriever GiveBirth() => new Retriever(); // Should not Compile
-}
+//public class Retriever : Dog
+//{
+//    public override Retriever GiveBirth() => new Retriever(); // Should not Compile
+//}
 
 public class Cat : Animal
 {
     public sealed override Animal GiveBirth() => new Cat();
 }
 
-public class Tiger : Cat
-{
-    //public override Tiger GiveBirth() => new Tiger(); // Should not compile
-}
+//public class Tiger : Cat
+//{
+//    public override Tiger GiveBirth() => new Tiger(); // Should not compile
+//}
 ```
 
 **case h - attribute inheritance**
