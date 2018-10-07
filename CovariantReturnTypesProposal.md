@@ -3448,3 +3448,168 @@ Note all IL has been tested using https://www.tutorialspoint.com/compile_ilasm_o
 
 ```csharp
 ```
+### 7.  How Design2 plays with other .Net code
+
+Since this Design uses type erasure, and the types are put back in using the attribute, any code written in other .Net languages which do not support the attribute, or in older versions of C# will be oblivious to the covariant return type. Instead they will see the original return type.
+
+For example, let us assume that Design2 is implemented in C# X.0
+
+The following library is then written:
+
+```csharp
+\\C# X.0
+public class Animal
+{
+    public virtual Animal GiveBirth() => new Animal();
+}
+
+public class Dog : Animal
+{
+    public override Dog GiveBirth() => new Dog();
+}
+```
+
+Then the library is consumed from some C# 7.0. The consuming code would see the following public API:
+```csharp
+\\ API as percieved by C# 7.0
+public class Animal
+{
+    public virtual Animal GiveBirth();
+}
+
+public class Dog : Animal
+{
+    public override Animal GiveBirth();
+}
+```
+
+Thus any casts whivh are automattically inserted in C# x.0, will have to be manually inserted in C# 7.0.
+
+This in and of itself is not a problem. It does however makes this design less attractive than Design1, where covariant return types would be able to be consumed identically from C# 7.0 and other .Net languages as from C# X.0.
+
+However this is not the only problem with backwards compatability. Unfortunately, by mixing C# X.0 and C# 7.0 it is actually possible to cause runtime type errors which should in theory be prevented. For example:
+
+```csharp
+\\Assembly1: C# X.0
+public class Animal
+{
+    public virtual Animal GiveBirth() => new Animal();
+}
+
+public class Dog : Animal
+{
+    public override Dog GiveBirth() => new Dog();
+}
+
+public static class BabyGetter
+{
+    public static Dog GetBaby(Dog dog) => dog.GiveBirth();
+}
+
+...
+\\Assembly2: C# 7.0
+
+public class Retriever : Dog
+{
+     public override Animal GiveBirth() => new Animal(); \\This compiles in C# 7.0, even though in C# X.0 it would be disallowed.
+}
+
+class Program
+{
+    static void Main(string[] args)
+    {
+         var retriever = new Retriever();
+	 var dog = BabyGetter.GetBaby(retriever); //Throws InvalidCastException
+    }
+}
+```
+
+There are two issues with the code above. Firstly, perfectly legal code containing no explicit casts is throwing an InvalidCastException. Given that one of the cornerstones of C# is type safety, this is bad news.
+
+Secondly, perfectly legal C# 7.0 code is no longer legal in C# X.0. We do not like to make breaking changes between different language versions.
+
+As a result backwards compatability, and compatability with other .Net code is a serious issue for Design2.
+
+### 8. Design2 Advantages/Disadvantages
+
+#### Advantages
+
+**1. No extra method call required**
+
+Unlike Design1, No extra method call is required when a covariant return type is used. This increases performance, and avoids altering the stack trace.
+
+**2. Easy to generate the code for the covariant return type**
+
+The code generated for the covariant return type is almost identical to the code generated for a non covariant return type, but with an attribute added. This should be easy to implement.
+
+**3. The method is a genuine override of the parent method**
+
+This means that attributes and reflection work exactly as one would expect.
+
+#### Disadvantages
+
+**1. Uses Type Erasure**
+
+One lesson that can be learned from Java Generics, is that use of type erasure can lead to enourmous complexity and numerous issues. All the disadvantages listed here stem from the use of type erasure.
+
+**2. Not Backwards Compatible**
+
+See the above section "How Design2 plays with other .Net code".
+
+**3. Hides Boxing**
+
+Consider the following code:
+
+```csharp
+public class Producer
+{
+    public virtual object Produce() => new object();
+}
+
+public class Int32Producer : Producer
+{
+    public override int Produce() => 42;
+}
+
+class Program
+{
+    static void Main(string[] args)
+    {
+         int number = new Int32Producer().Produce();
+    }
+}
+```
+
+Whilst it appears as though the int 42 is not being boxed in this example, the actual generated IL looks something like this:
+
+```csharp
+public class Producer
+{
+    public virtual object Produce() => new object();
+}
+
+public class Int32Producer : Producer
+{
+    [ReturnType(int)]
+    public override object Produce() => 42;
+}
+
+class Program
+{
+    static void Main(string[] args)
+    {
+         int number = (int) new Int32Producer().Produce();
+    }
+}
+```
+
+In fact 42 is being both unboxed and boxed here, but that fact is invisible to anyone who doesn't  know the internals of this Design.
+
+This may lead to unexpected performance issues.
+
+**4. This requires changing emited IL wherever a covariant return type is consumed**
+
+Wherever a method with the ReturnTypeAttribute is consumed, casts will have to be added to the IL.
+
+This makes this a far larger change to Roslyn than Design1, which only required local changes. Instead this Design would presumably require changing Roslyn in numerous places to make sure the cast is inserted. This is unlikely to happen for a design which already has many weaknesses.
+
