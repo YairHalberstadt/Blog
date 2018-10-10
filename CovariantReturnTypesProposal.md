@@ -3853,9 +3853,1268 @@ Note all IL has been tested using https://www.tutorialspoint.com/compile_ilasm_o
 ```
 
 **case e**
+```csharp
+.assembly Covariant {}
+.assembly extern mscorlib {}
+.class private auto ansi beforefieldinit Program
+    extends [mscorlib]System.Object
+{
+    // Methods
+    .method private hidebysig static 
+        void Main (
+            string[] args
+        ) cil managed 
+    {
+        // Method begins at RVA 0x2050
+        // Code size 61 (0x3d)
+        .entrypoint
+        .maxstack 1
+        .locals init (
+            [0] class Retriever,
+            [1] class Retriever,
+            [2] class Dog,
+            [3] class Dog,
+            [4] class Animal,
+            [5] class Animal
+        )
+
+        IL_0000: nop
+        IL_0001: newobj instance void Retriever::.ctor()
+        IL_0006: stloc.0
+        IL_0007: ldloc.0
+        IL_0008: callvirt instance class Animal Animal::GiveBirth()
+        IL_000d: castclass Retriever
+        IL_0012: stloc.1
+        IL_0013: ldloc.0
+        IL_0014: stloc.2
+        IL_0015: ldloc.2
+        IL_0016: callvirt instance class Animal Animal::GiveBirth()
+        IL_001b: castclass Dog
+        IL_0020: stloc.3
+        IL_0021: ldloc.3
+        IL_0022: callvirt instance class [mscorlib]System.Type [mscorlib]System.Object::GetType()
+        IL_0027: pop
+        IL_0028: ldloc.0
+        IL_0029: stloc.s 4
+        IL_002b: ldloc.s 4
+        IL_002d: callvirt instance class Animal Animal::GiveBirth()
+        IL_0032: stloc.s 5
+        IL_0034: ldloc.s 5
+        IL_0036: callvirt instance class [mscorlib]System.Type [mscorlib]System.Object::GetType()
+        IL_003b: pop
+        IL_003c: ret
+    } // end of method Program::Main
+
+    .method public hidebysig specialname rtspecialname 
+        instance void .ctor () cil managed 
+    {
+        // Method begins at RVA 0x2099
+        // Code size 8 (0x8)
+        .maxstack 8
+
+        IL_0000: ldarg.0
+        IL_0001: call instance void [mscorlib]System.Object::.ctor()
+        IL_0006: nop
+        IL_0007: ret
+    } // end of method Program::.ctor
+
+} // end of class Program
+
+.class public auto ansi beforefieldinit Animal
+    extends [mscorlib]System.Object
+{
+    // Methods
+    .method public hidebysig newslot virtual 
+        instance class Animal GiveBirth () cil managed 
+    {
+        // Method begins at RVA 0x20a2
+        // Code size 6 (0x6)
+        .maxstack 8
+
+        IL_0000: newobj instance void Animal::.ctor()
+        IL_0005: ret
+    } // end of method Animal::GiveBirth
+
+    .method public hidebysig specialname rtspecialname 
+        instance void .ctor () cil managed 
+    {
+        // Method begins at RVA 0x2099
+        // Code size 8 (0x8)
+        .maxstack 8
+
+        IL_0000: ldarg.0
+        IL_0001: call instance void [mscorlib]System.Object::.ctor()
+        IL_0006: nop
+        IL_0007: ret
+    } // end of method Animal::.ctor
+
+} // end of class Animal
+
+.class public auto ansi beforefieldinit Dog
+    extends Animal
+{
+    // Methods
+    .method public hidebysig virtual 
+        instance class Animal GiveBirth () cil managed 
+    {
+        .custom instance void ReturnTypeAttribute::.ctor(class [mscorlib]System.Type) = (
+            01 00 03 44 6f 67 00 00
+        )
+        // Method begins at RVA 0x20a9
+        // Code size 6 (0x6)
+        .maxstack 8
+
+        IL_0000: newobj instance void Dog::.ctor()
+        IL_0005: ret
+    } // end of method Dog::GiveBirth
+
+    .method public hidebysig specialname rtspecialname 
+        instance void .ctor () cil managed 
+    {
+        // Method begins at RVA 0x20b0
+        // Code size 8 (0x8)
+        .maxstack 8
+
+        IL_0000: ldarg.0
+        IL_0001: call instance void Animal::.ctor()
+        IL_0006: nop
+        IL_0007: ret
+    } // end of method Dog::.ctor
+
+} // end of class Dog
+
+.class public auto ansi beforefieldinit Poodle
+    extends Dog
+{
+    // Methods
+    .method public hidebysig virtual 
+        instance class Animal GiveBirth () cil managed 
+    {
+        .custom instance void ReturnTypeAttribute::.ctor(class [mscorlib]System.Type) = (
+            01 00 03 44 6f 67 00 00
+        )
+        // Method begins at RVA 0x20b9
+        // Code size 6 (0x6)
+        .maxstack 8
+
+        IL_0000: newobj instance void Poodle::.ctor()
+        IL_0005: ret
+    } // end of method Poodle::GiveBirth
+
+    .method public hidebysig specialname rtspecialname 
+        instance void .ctor () cil managed 
+    {
+        // Method begins at RVA 0x20c0
+        // Code size 8 (0x8)
+        .maxstack 8
+
+        IL_0000: ldarg.0
+        IL_0001: call instance void Dog::.ctor()
+        IL_0006: nop
+        IL_0007: ret
+    } // end of method Poodle::.ctor
+
+} // end of class Poodle
+
+.class public auto ansi beforefieldinit Retriever
+    extends Dog
+{
+    // Methods
+    .method public hidebysig virtual 
+        instance class Animal GiveBirth () cil managed 
+    {
+        .custom instance void ReturnTypeAttribute::.ctor(class [mscorlib]System.Type) = (
+            01 00 09 52 65 74 72 69 65 76 65 72 00 00
+        )
+        // Method begins at RVA 0x20c9
+        // Code size 6 (0x6)
+        .maxstack 8
+
+        IL_0000: newobj instance void Retriever::.ctor()
+        IL_0005: ret
+    } // end of method Retriever::GiveBirth
+
+    .method public hidebysig specialname rtspecialname 
+        instance void .ctor () cil managed 
+    {
+        // Method begins at RVA 0x20c0
+        // Code size 8 (0x8)
+        .maxstack 8
+
+        IL_0000: ldarg.0
+        IL_0001: call instance void Dog::.ctor()
+        IL_0006: nop
+        IL_0007: ret
+    } // end of method Retriever::.ctor
+
+} // end of class Retriever
+```
+
+**case f**
+```csharp
+.assembly Covariant {}
+.assembly extern mscorlib {}
+.class private auto ansi beforefieldinit Program
+    extends [mscorlib]System.Object
+{
+    // Methods
+    .method private hidebysig static 
+        void Main (
+            string[] args
+        ) cil managed 
+    {
+        // Method begins at RVA 0x2050
+        // Code size 61 (0x3d)
+	.entrypoint
+        .maxstack 1
+        .locals init (
+            [0] class Retriever,
+            [1] class Retriever,
+            [2] class Dog,
+            [3] class Dog,
+            [4] class Animal,
+            [5] class Animal
+        )
+
+        IL_0000: nop
+        IL_0001: newobj instance void Retriever::.ctor()
+        IL_0006: stloc.0
+        IL_0007: ldloc.0
+        IL_0008: callvirt instance class Animal Animal::GiveBirth()
+        IL_000d: castclass Retriever
+        IL_0012: stloc.1
+        IL_0013: ldloc.0
+        IL_0014: stloc.2
+        IL_0015: ldloc.2
+        IL_0016: callvirt instance class Animal Animal::GiveBirth()
+        IL_001b: castclass Dog
+        IL_0020: stloc.3
+        IL_0021: ldloc.3
+        IL_0022: callvirt instance class [mscorlib]System.Type [mscorlib]System.Object::GetType()
+        IL_0027: pop
+        IL_0028: ldloc.0
+        IL_0029: stloc.s 4
+        IL_002b: ldloc.s 4
+        IL_002d: callvirt instance class Animal Animal::GiveBirth()
+        IL_0032: stloc.s 5
+        IL_0034: ldloc.s 5
+        IL_0036: callvirt instance class [mscorlib]System.Type [mscorlib]System.Object::GetType()
+        IL_003b: pop
+        IL_003c: ret
+    } // end of method Program::Main
+
+    .method public hidebysig specialname rtspecialname 
+        instance void .ctor () cil managed 
+    {
+        // Method begins at RVA 0x2099
+        // Code size 8 (0x8)
+        .maxstack 8
+
+        IL_0000: ldarg.0
+        IL_0001: call instance void [mscorlib]System.Object::.ctor()
+        IL_0006: nop
+        IL_0007: ret
+    } // end of method Program::.ctor
+
+} // end of class Program
+
+.class public auto ansi abstract beforefieldinit Animal
+    extends [mscorlib]System.Object
+{
+    // Methods
+    .method public hidebysig newslot abstract virtual 
+        instance class Animal GiveBirth () cil managed 
+    {
+    } // end of method Animal::GiveBirth
+
+    .method family hidebysig specialname rtspecialname 
+        instance void .ctor () cil managed 
+    {
+        // Method begins at RVA 0x2099
+        // Code size 8 (0x8)
+        .maxstack 8
+
+        IL_0000: ldarg.0
+        IL_0001: call instance void [mscorlib]System.Object::.ctor()
+        IL_0006: nop
+        IL_0007: ret
+    } // end of method Animal::.ctor
+
+} // end of class Animal
+
+.class public auto ansi abstract beforefieldinit Dog
+    extends Animal
+{
+    // Methods
+    .method public hidebysig abstract virtual 
+        instance class Animal GiveBirth () cil managed 
+    {
+        .custom instance void ReturnTypeAttribute::.ctor(class [mscorlib]System.Type) = (
+            01 00 03 44 6f 67 00 00
+        )
+    } // end of method Dog::GiveBirth
+
+    .method family hidebysig specialname rtspecialname 
+        instance void .ctor () cil managed 
+    {
+        // Method begins at RVA 0x20a2
+        // Code size 8 (0x8)
+        .maxstack 8
+
+        IL_0000: ldarg.0
+        IL_0001: call instance void Animal::.ctor()
+        IL_0006: nop
+        IL_0007: ret
+    } // end of method Dog::.ctor
+
+} // end of class Dog
+
+.class public auto ansi beforefieldinit Poodle
+    extends Dog
+{
+    // Methods
+    .method public hidebysig virtual 
+        instance class Animal GiveBirth () cil managed 
+    {
+        .custom instance void ReturnTypeAttribute::.ctor(class [mscorlib]System.Type) = (
+            01 00 03 44 6f 67 00 00
+        )
+        // Method begins at RVA 0x20ab
+        // Code size 6 (0x6)
+        .maxstack 8
+
+        IL_0000: newobj instance void Poodle::.ctor()
+        IL_0005: ret
+    } // end of method Poodle::GiveBirth
+
+    .method public hidebysig specialname rtspecialname 
+        instance void .ctor () cil managed 
+    {
+        // Method begins at RVA 0x20b2
+        // Code size 8 (0x8)
+        .maxstack 8
+
+        IL_0000: ldarg.0
+        IL_0001: call instance void Dog::.ctor()
+        IL_0006: nop
+        IL_0007: ret
+    } // end of method Poodle::.ctor
+
+} // end of class Poodle
+
+.class public auto ansi beforefieldinit Retriever
+    extends Dog
+{
+    // Methods
+    .method public hidebysig virtual 
+        instance class Animal GiveBirth () cil managed 
+    {
+        .custom instance void ReturnTypeAttribute::.ctor(class [mscorlib]System.Type) = (
+            01 00 09 52 65 74 72 69 65 76 65 72 00 00
+        )
+        // Method begins at RVA 0x20bb
+        // Code size 6 (0x6)
+        .maxstack 8
+
+        IL_0000: newobj instance void Retriever::.ctor()
+        IL_0005: ret
+    } // end of method Retriever::GiveBirth
+
+    .method public hidebysig specialname rtspecialname 
+        instance void .ctor () cil managed 
+    {
+        // Method begins at RVA 0x20b2
+        // Code size 8 (0x8)
+        .maxstack 8
+
+        IL_0000: ldarg.0
+        IL_0001: call instance void Dog::.ctor()
+        IL_0006: nop
+        IL_0007: ret
+    } // end of method Retriever::.ctor
+
+} // end of class Retriever
+```
+
+**case g**
+```csharp
+.assembly Hello {}
+.assembly extern mscorlib {}
+.class private auto ansi beforefieldinit Program
+    extends [mscorlib]System.Object
+{
+    // Methods
+    .method private hidebysig static 
+        void Main (
+            string[] args
+        ) cil managed 
+    {
+        // Method begins at RVA 0x2050
+        // Code size 36 (0x24)
+	.entrypoint
+        .maxstack 1
+        .locals init (
+            [0] class Dog,
+            [1] class Dog,
+            [2] class Animal,
+            [3] class Animal
+        )
+
+        IL_0000: nop
+        IL_0001: newobj instance void Dog::.ctor()
+        IL_0006: stloc.0
+        IL_0007: ldloc.0
+        IL_0008: callvirt instance class Animal Animal::GiveBirth()
+        IL_000d: castclass Dog
+        IL_0012: stloc.1
+        IL_0013: ldloc.0
+        IL_0014: stloc.2
+        IL_0015: ldloc.2
+        IL_0016: callvirt instance class Animal Animal::GiveBirth()
+        IL_001b: stloc.3
+        IL_001c: ldloc.3
+        IL_001d: callvirt instance class [mscorlib]System.Type [mscorlib]System.Object::GetType()
+        IL_0022: pop
+        IL_0023: ret
+    } // end of method Program::Main
+
+    .method public hidebysig specialname rtspecialname 
+        instance void .ctor () cil managed 
+    {
+        // Method begins at RVA 0x2080
+        // Code size 8 (0x8)
+        .maxstack 8
+
+        IL_0000: ldarg.0
+        IL_0001: call instance void [mscorlib]System.Object::.ctor()
+        IL_0006: nop
+        IL_0007: ret
+    } // end of method Program::.ctor
+
+} // end of class Program
+
+.class public auto ansi beforefieldinit Animal
+    extends [mscorlib]System.Object
+{
+    // Methods
+    .method public hidebysig newslot virtual 
+        instance class Animal GiveBirth () cil managed 
+    {
+        // Method begins at RVA 0x2089
+        // Code size 6 (0x6)
+        .maxstack 8
+
+        IL_0000: newobj instance void Animal::.ctor()
+        IL_0005: ret
+    } // end of method Animal::GiveBirth
+
+    .method public hidebysig specialname rtspecialname 
+        instance void .ctor () cil managed 
+    {
+        // Method begins at RVA 0x2080
+        // Code size 8 (0x8)
+        .maxstack 8
+
+        IL_0000: ldarg.0
+        IL_0001: call instance void [mscorlib]System.Object::.ctor()
+        IL_0006: nop
+        IL_0007: ret
+    } // end of method Animal::.ctor
+
+} // end of class Animal
+
+.class public auto ansi beforefieldinit Dog
+    extends Animal
+{
+    // Methods
+    .method public final hidebysig virtual 
+        instance class Animal GiveBirth () cil managed 
+    {
+        .custom instance void ReturnTypeAttribute::.ctor(class [mscorlib]System.Type) = (
+            01 00 03 44 6f 67 00 00
+        )
+        // Method begins at RVA 0x2090
+        // Code size 6 (0x6)
+        .maxstack 8
+
+        IL_0000: newobj instance void Dog::.ctor()
+        IL_0005: ret
+    } // end of method Dog::GiveBirth
+
+    .method public hidebysig specialname rtspecialname 
+        instance void .ctor () cil managed 
+    {
+        // Method begins at RVA 0x2097
+        // Code size 8 (0x8)
+        .maxstack 8
+
+        IL_0000: ldarg.0
+        IL_0001: call instance void Animal::.ctor()
+        IL_0006: nop
+        IL_0007: ret
+    } // end of method Dog::.ctor
+
+} // end of class Dog
+
+.class public auto ansi beforefieldinit Cat
+    extends Animal
+{
+    // Methods
+    .method public final hidebysig virtual 
+        instance class Animal GiveBirth () cil managed 
+    {
+        // Method begins at RVA 0x20a0
+        // Code size 6 (0x6)
+        .maxstack 8
+
+        IL_0000: newobj instance void Cat::.ctor()
+        IL_0005: ret
+    } // end of method Cat::GiveBirth
+
+    .method public hidebysig specialname rtspecialname 
+        instance void .ctor () cil managed 
+    {
+        // Method begins at RVA 0x2097
+        // Code size 8 (0x8)
+        .maxstack 8
+
+        IL_0000: ldarg.0
+        IL_0001: call instance void Animal::.ctor()
+        IL_0006: nop
+        IL_0007: ret
+    } // end of method Cat::.ctor
+
+} // end of class Cat
+```
+
+**case h**
+```csharp
+.assembly Covariant {}
+.assembly extern mscorlib {}
+.class public auto ansi beforefieldinit InheritedAtrributeSingleInstance
+    extends [mscorlib]System.Attribute
+{
+    .custom instance void [mscorlib]System.AttributeUsageAttribute::.ctor(valuetype [mscorlib]System.AttributeTargets) = (
+        01 00 40 00 00 00 02 00 54 02 0d 41 6c 6c 6f 77
+        4d 75 6c 74 69 70 6c 65 00 54 02 09 49 6e 68 65
+        72 69 74 65 64 01
+    )
+    // Methods
+    .method public hidebysig specialname rtspecialname 
+        instance void .ctor (
+            int32 id
+        ) cil managed 
+    {
+        // Method begins at RVA 0x2050
+        // Code size 9 (0x9)
+        .maxstack 8
+
+        IL_0000: ldarg.0
+        IL_0001: call instance void [mscorlib]System.Attribute::.ctor()
+        IL_0006: nop
+        IL_0007: nop
+        IL_0008: ret
+    } // end of method InheritedAtrributeSingleInstance::.ctor
+
+} // end of class InheritedAtrributeSingleInstance
+
+.class public auto ansi beforefieldinit InheritedAtrributeMultipleInstance
+    extends [mscorlib]System.Attribute
+{
+    .custom instance void [mscorlib]System.AttributeUsageAttribute::.ctor(valuetype [mscorlib]System.AttributeTargets) = (
+        01 00 40 00 00 00 02 00 54 02 0d 41 6c 6c 6f 77
+        4d 75 6c 74 69 70 6c 65 01 54 02 09 49 6e 68 65
+        72 69 74 65 64 01
+    )
+    // Methods
+    .method public hidebysig specialname rtspecialname 
+        instance void .ctor (
+            int32 id
+        ) cil managed 
+    {
+        // Method begins at RVA 0x2050
+        // Code size 9 (0x9)
+        .maxstack 8
+
+        IL_0000: ldarg.0
+        IL_0001: call instance void [mscorlib]System.Attribute::.ctor()
+        IL_0006: nop
+        IL_0007: nop
+        IL_0008: ret
+    } // end of method InheritedAtrributeMultipleInstance::.ctor
+
+} // end of class InheritedAtrributeMultipleInstance
+
+.class public auto ansi beforefieldinit NonInheritedAtrributeSingleInstance
+    extends [mscorlib]System.Attribute
+{
+    .custom instance void [mscorlib]System.AttributeUsageAttribute::.ctor(valuetype [mscorlib]System.AttributeTargets) = (
+        01 00 40 00 00 00 02 00 54 02 0d 41 6c 6c 6f 77
+        4d 75 6c 74 69 70 6c 65 00 54 02 09 49 6e 68 65
+        72 69 74 65 64 00
+    )
+    // Methods
+    .method public hidebysig specialname rtspecialname 
+        instance void .ctor (
+            int32 id
+        ) cil managed 
+    {
+        // Method begins at RVA 0x2050
+        // Code size 9 (0x9)
+        .maxstack 8
+
+        IL_0000: ldarg.0
+        IL_0001: call instance void [mscorlib]System.Attribute::.ctor()
+        IL_0006: nop
+        IL_0007: nop
+        IL_0008: ret
+    } // end of method NonInheritedAtrributeSingleInstance::.ctor
+
+} // end of class NonInheritedAtrributeSingleInstance
+
+.class public auto ansi beforefieldinit Animal
+    extends [mscorlib]System.Object
+{
+    // Methods
+    .method public hidebysig newslot virtual 
+        instance class Animal GiveBirth () cil managed 
+    {
+        .custom instance void InheritedAtrributeSingleInstance::.ctor(int32) = (
+            01 00 00 00 00 00 00 00
+        )
+        .custom instance void InheritedAtrributeMultipleInstance::.ctor(int32) = (
+            01 00 00 00 00 00 00 00
+        )
+        .custom instance void NonInheritedAtrributeSingleInstance::.ctor(int32) = (
+            01 00 00 00 00 00 00 00
+        )
+        // Method begins at RVA 0x205a
+        // Code size 6 (0x6)
+        .maxstack 8
+
+        IL_0000: newobj instance void Animal::.ctor()
+        IL_0005: ret
+    } // end of method Animal::GiveBirth
+
+    .method public hidebysig specialname rtspecialname 
+        instance void .ctor () cil managed 
+    {
+        // Method begins at RVA 0x2061
+        // Code size 8 (0x8)
+        .maxstack 8
+
+        IL_0000: ldarg.0
+        IL_0001: call instance void [mscorlib]System.Object::.ctor()
+        IL_0006: nop
+        IL_0007: ret
+    } // end of method Animal::.ctor
+
+} // end of class Animal
+
+.class public auto ansi beforefieldinit Dog
+    extends Animal
+{
+    // Methods
+    .method public hidebysig virtual 
+        instance class Animal GiveBirth () cil managed 
+    {
+        .custom instance void ReturnTypeAttribute::.ctor(class [mscorlib]System.Type) = (
+            01 00 03 44 6f 67 00 00
+        )
+        // Method begins at RVA 0x206a
+        // Code size 6 (0x6)
+        .maxstack 8
+
+        IL_0000: newobj instance void Dog::.ctor()
+        IL_0005: ret
+    } // end of method Dog::GiveBirth
+
+    .method public hidebysig specialname rtspecialname 
+        instance void .ctor () cil managed 
+    {
+        // Method begins at RVA 0x2071
+        // Code size 8 (0x8)
+        .maxstack 8
+
+        IL_0000: ldarg.0
+        IL_0001: call instance void Animal::.ctor()
+        IL_0006: nop
+        IL_0007: ret
+    } // end of method Dog::.ctor
+
+} // end of class Dog
+
+.class public auto ansi beforefieldinit Poodle
+    extends Dog
+{
+    // Methods
+    .method public hidebysig virtual 
+        instance class Animal GiveBirth () cil managed 
+    {
+        .custom instance void ReturnTypeAttribute::.ctor(class [mscorlib]System.Type) = (
+            01 00 03 44 6f 67 00 00
+        )
+        // Method begins at RVA 0x207a
+        // Code size 6 (0x6)
+        .maxstack 8
+
+        IL_0000: newobj instance void Poodle::.ctor()
+        IL_0005: ret
+    } // end of method Poodle::GiveBirth
+
+    .method public hidebysig specialname rtspecialname 
+        instance void .ctor () cil managed 
+    {
+        // Method begins at RVA 0x2081
+        // Code size 8 (0x8)
+        .maxstack 8
+
+        IL_0000: ldarg.0
+        IL_0001: call instance void Dog::.ctor()
+        IL_0006: nop
+        IL_0007: ret
+    } // end of method Poodle::.ctor
+
+} // end of class Poodle
+
+.class public auto ansi beforefieldinit Retriever
+    extends Dog
+{
+    // Methods
+    .method public hidebysig virtual 
+        instance class Animal GiveBirth () cil managed 
+    {
+        .custom instance void ReturnTypeAttribute::.ctor(class [mscorlib]System.Type) = (
+            01 00 09 52 65 74 72 69 65 76 65 72 00 00
+        )
+        // Method begins at RVA 0x208a
+        // Code size 6 (0x6)
+        .maxstack 8
+
+        IL_0000: newobj instance void Retriever::.ctor()
+        IL_0005: ret
+    } // end of method Retriever::GiveBirth
+
+    .method public hidebysig specialname rtspecialname 
+        instance void .ctor () cil managed 
+    {
+        // Method begins at RVA 0x2081
+        // Code size 8 (0x8)
+        .maxstack 8
+
+        IL_0000: ldarg.0
+        IL_0001: call instance void Dog::.ctor()
+        IL_0006: nop
+        IL_0007: ret
+    } // end of method Retriever::.ctor
+
+} // end of class Retriever
+
+.class public auto ansi beforefieldinit StBernard
+    extends Dog
+{
+    // Methods
+    .method public hidebysig virtual 
+        instance class Animal GiveBirth () cil managed 
+    {
+        .custom instance void InheritedAtrributeMultipleInstance::.ctor(int32) = (
+            01 00 01 00 00 00 00 00
+        )
+        .custom instance void InheritedAtrributeSingleInstance::.ctor(int32) = (
+            01 00 01 00 00 00 00 00
+        )
+        .custom instance void ReturnTypeAttribute::.ctor(class [mscorlib]System.Type) = (
+            01 00 09 53 74 42 65 72 6e 61 72 64 00 00
+        )
+        // Method begins at RVA 0x2091
+        // Code size 6 (0x6)
+        .maxstack 8
+
+        IL_0000: newobj instance void StBernard::.ctor()
+        IL_0005: ret
+    } // end of method StBernard::GiveBirth
+
+    .method public hidebysig specialname rtspecialname 
+        instance void .ctor () cil managed 
+    {
+        // Method begins at RVA 0x2081
+        // Code size 8 (0x8)
+        .maxstack 8
+
+        IL_0000: ldarg.0
+        IL_0001: call instance void Dog::.ctor()
+        IL_0006: nop
+        IL_0007: ret
+    } // end of method StBernard::.ctor
+
+} // end of class StBernard
+
+.class public auto ansi beforefieldinit Collie
+    extends Dog
+{
+    // Methods
+    .method public hidebysig virtual 
+        instance class Animal GiveBirth () cil managed 
+    {
+        .custom instance void InheritedAtrributeMultipleInstance::.ctor(int32) = (
+            01 00 01 00 00 00 00 00
+        )
+        .custom instance void InheritedAtrributeSingleInstance::.ctor(int32) = (
+            01 00 01 00 00 00 00 00
+        )
+        .custom instance void ReturnTypeAttribute::.ctor(class [mscorlib]System.Type) = (
+            01 00 03 44 6f 67 00 00
+        )
+        // Method begins at RVA 0x2098
+        // Code size 6 (0x6)
+        .maxstack 8
+
+        IL_0000: newobj instance void Collie::.ctor()
+        IL_0005: ret
+    } // end of method Collie::GiveBirth
+
+    .method public hidebysig specialname rtspecialname 
+        instance void .ctor () cil managed 
+    {
+        // Method begins at RVA 0x2081
+        // Code size 8 (0x8)
+        .maxstack 8
+
+        IL_0000: ldarg.0
+        IL_0001: call instance void Dog::.ctor()
+        IL_0006: nop
+        IL_0007: ret
+    } // end of method Collie::.ctor
+
+} // end of class Collie
+
+.class public auto ansi beforefieldinit Cat
+    extends Animal
+{
+    // Methods
+    .method public hidebysig virtual 
+        instance class Animal GiveBirth () cil managed 
+    {
+        .custom instance void InheritedAtrributeMultipleInstance::.ctor(int32) = (
+            01 00 01 00 00 00 00 00
+        )
+        .custom instance void InheritedAtrributeSingleInstance::.ctor(int32) = (
+            01 00 01 00 00 00 00 00
+        )
+        .custom instance void NonInheritedAtrributeSingleInstance::.ctor(int32) = (
+            01 00 01 00 00 00 00 00
+        )
+        .custom instance void ReturnTypeAttribute::.ctor(class [mscorlib]System.Type) = (
+            01 00 03 43 61 74 00 00
+        )
+        // Method begins at RVA 0x209f
+        // Code size 6 (0x6)
+        .maxstack 8
+
+        IL_0000: newobj instance void Cat::.ctor()
+        IL_0005: ret
+    } // end of method Cat::GiveBirth
+
+    .method public hidebysig specialname rtspecialname 
+        instance void .ctor () cil managed 
+    {
+        // Method begins at RVA 0x2071
+        // Code size 8 (0x8)
+        .maxstack 8
+
+        IL_0000: ldarg.0
+        IL_0001: call instance void Animal::.ctor()
+        IL_0006: nop
+        IL_0007: ret
+    } // end of method Cat::.ctor
+
+} // end of class Cat
+
+.class public auto ansi beforefieldinit Tiger
+    extends Cat
+{
+    // Methods
+    .method public hidebysig virtual 
+        instance class Animal GiveBirth () cil managed 
+    {
+        .custom instance void ReturnTypeAttribute::.ctor(class [mscorlib]System.Type) = (
+            01 00 05 54 69 67 65 72 00 00
+        )
+        // Method begins at RVA 0x20a6
+        // Code size 6 (0x6)
+        .maxstack 8
+
+        IL_0000: newobj instance void Tiger::.ctor()
+        IL_0005: ret
+    } // end of method Tiger::GiveBirth
+
+    .method public hidebysig specialname rtspecialname 
+        instance void .ctor () cil managed 
+    {
+        // Method begins at RVA 0x20ad
+        // Code size 8 (0x8)
+        .maxstack 8
+
+        IL_0000: ldarg.0
+        IL_0001: call instance void Cat::.ctor()
+        IL_0006: nop
+        IL_0007: ret
+    } // end of method Tiger::.ctor
+
+} // end of class Tiger
+
+.class public auto ansi beforefieldinit Leopard
+    extends Cat
+{
+    // Methods
+    .method public hidebysig virtual 
+        instance class Animal GiveBirth () cil managed 
+    {
+        .custom instance void ReturnTypeAttribute::.ctor(class [mscorlib]System.Type) = (
+            01 00 03 43 61 74 00 00
+        )
+        // Method begins at RVA 0x20b6
+        // Code size 6 (0x6)
+        .maxstack 8
+
+        IL_0000: newobj instance void Leopard::.ctor()
+        IL_0005: ret
+    } // end of method Leopard::GiveBirth
+
+    .method public hidebysig specialname rtspecialname 
+        instance void .ctor () cil managed 
+    {
+        // Method begins at RVA 0x20ad
+        // Code size 8 (0x8)
+        .maxstack 8
+
+        IL_0000: ldarg.0
+        IL_0001: call instance void Cat::.ctor()
+        IL_0006: nop
+        IL_0007: ret
+    } // end of method Leopard::.ctor
+
+} // end of class Leopard
+
+.class public auto ansi beforefieldinit Cheetah
+    extends Cat
+{
+    // Methods
+    .method public hidebysig virtual 
+        instance class Animal GiveBirth () cil managed 
+    {
+        .custom instance void InheritedAtrributeMultipleInstance::.ctor(int32) = (
+            01 00 02 00 00 00 00 00
+        )
+        .custom instance void InheritedAtrributeSingleInstance::.ctor(int32) = (
+            01 00 02 00 00 00 00 00
+        )
+        .custom instance void ReturnTypeAttribute::.ctor(class [mscorlib]System.Type) = (
+            01 00 07 43 68 65 65 74 61 68 00 00
+        )
+        // Method begins at RVA 0x20bd
+        // Code size 6 (0x6)
+        .maxstack 8
+
+        IL_0000: newobj instance void Cheetah::.ctor()
+        IL_0005: ret
+    } // end of method Cheetah::GiveBirth
+
+    .method public hidebysig specialname rtspecialname 
+        instance void .ctor () cil managed 
+    {
+        // Method begins at RVA 0x20ad
+        // Code size 8 (0x8)
+        .maxstack 8
+
+        IL_0000: ldarg.0
+        IL_0001: call instance void Cat::.ctor()
+        IL_0006: nop
+        IL_0007: ret
+    } // end of method Cheetah::.ctor
+
+} // end of class Cheetah
+
+.class public auto ansi beforefieldinit Jaguar
+    extends Cat
+{
+    // Methods
+    .method public hidebysig virtual 
+        instance class Animal GiveBirth () cil managed 
+    {
+        .custom instance void InheritedAtrributeMultipleInstance::.ctor(int32) = (
+            01 00 02 00 00 00 00 00
+        )
+        .custom instance void InheritedAtrributeSingleInstance::.ctor(int32) = (
+            01 00 02 00 00 00 00 00
+        )
+        .custom instance void ReturnTypeAttribute::.ctor(class [mscorlib]System.Type) = (
+            01 00 03 43 61 74 00 00
+        )
+        // Method begins at RVA 0x20c4
+        // Code size 6 (0x6)
+        .maxstack 8
+
+        IL_0000: newobj instance void Jaguar::.ctor()
+        IL_0005: ret
+    } // end of method Jaguar::GiveBirth
+
+    .method public hidebysig specialname rtspecialname 
+        instance void .ctor () cil managed 
+    {
+        // Method begins at RVA 0x20ad
+        // Code size 8 (0x8)
+        .maxstack 8
+
+        IL_0000: ldarg.0
+        IL_0001: call instance void Cat::.ctor()
+        IL_0006: nop
+        IL_0007: ret
+    } // end of method Jaguar::.ctor
+
+} // end of class Jaguar
+```
+
+**case i**
+
+This case is essentially translated to the equavalent C#:
+```csharp
+class Program
+{
+    static void Main(string[] args)
+    {
+        var dog = new Dog();
+        Func<Dog> dogFunc = () => (Dog)dog.GiveBirth(); //should compile
+        var babyDog = FunctionApplier(() => (Dog)dog.GiveBirth()); //type of var should be Dog
+    }
+
+    static T FunctionApplier<T>(Func<T> func) => func();
+}
+
+public class Animal
+{
+    public virtual Animal GiveBirth() => new Animal();
+}
+
+public class Dog : Animal
+{
+    [ReturnType(typeof(Dog))]
+    public override Animal GiveBirth() => new Dog();
+}
+```
+Note that a new delegate has to be created wrapping the GiveBirth method to make sure that the delegate is of the right type.
+
+In theory this ahould also be optimised, so that when the delegate return type is of the base return type, no extra delegate is ontroduced. For example;
 
 ```csharp
+[ReturnType(typeof(int)]
+public object Method() => default(int);
+
+...
+
+Func<int> a = Method; \\ converted to Func<int> a = () => (int)Method();
+
+Func<ValueType> b = Method; \\ converted to Func<ValueType> b = () => (ValueType)Method();
+
+Func<object> c = Method; \\ converted to Func<object> c = Method;
 ```
+
+Here is the emitted IL for this test case:
+
+```csharp
+.assembly Covariant {}
+.assembly extern mscorlib {}
+.class private auto ansi beforefieldinit Program
+    extends [mscorlib]System.Object
+{
+    // Nested Types
+    .class nested private auto ansi sealed beforefieldinit '<>c__DisplayClass0_0'
+        extends [mscorlib]System.Object
+    {
+        .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = (
+            01 00 00 00
+        )
+        // Fields
+        .field public class Dog dog
+
+        // Methods
+        .method public hidebysig specialname rtspecialname 
+            instance void .ctor () cil managed 
+        {
+            // Method begins at RVA 0x2096
+            // Code size 8 (0x8)
+            .maxstack 8
+
+            IL_0000: ldarg.0
+            IL_0001: call instance void [mscorlib]System.Object::.ctor()
+            IL_0006: nop
+            IL_0007: ret
+        } // end of method '<>c__DisplayClass0_0'::.ctor
+
+        .method assembly hidebysig 
+            instance class Dog '<Main>b__0' () cil managed 
+        {
+            // Method begins at RVA 0x20cf
+            // Code size 17 (0x11)
+            .maxstack 8
+
+            IL_0000: ldarg.0
+            IL_0001: ldfld class Dog Program/'<>c__DisplayClass0_0'::dog
+            IL_0006: callvirt instance class Animal Animal::GiveBirth()
+            IL_000b: castclass Dog
+            IL_0010: ret
+        } // end of method '<>c__DisplayClass0_0'::'<Main>b__0'
+
+        .method assembly hidebysig 
+            instance class Dog '<Main>b__1' () cil managed 
+        {
+            // Method begins at RVA 0x20cf
+            // Code size 17 (0x11)
+            .maxstack 8
+
+            IL_0000: ldarg.0
+            IL_0001: ldfld class Dog Program/'<>c__DisplayClass0_0'::dog
+            IL_0006: callvirt instance class Animal Animal::GiveBirth()
+            IL_000b: castclass Dog
+            IL_0010: ret
+        } // end of method '<>c__DisplayClass0_0'::'<Main>b__1'
+
+    } // end of class <>c__DisplayClass0_0
+
+
+    // Methods
+    .method private hidebysig static 
+        void Main (
+            string[] args
+        ) cil managed 
+    {
+        // Method begins at RVA 0x2050
+        // Code size 50 (0x32)
+	.entrypoint
+        .maxstack 2
+        .locals init (
+            [0] class Program/'<>c__DisplayClass0_0',
+            [1] class [mscorlib]System.Func`1<class Dog>,
+            [2] class Dog
+        )
+
+        // sequence point: hidden
+        IL_0000: newobj instance void Program/'<>c__DisplayClass0_0'::.ctor()
+        IL_0005: stloc.0
+        IL_0006: nop
+        IL_0007: ldloc.0
+        IL_0008: newobj instance void Dog::.ctor()
+        IL_000d: stfld class Dog Program/'<>c__DisplayClass0_0'::dog
+        IL_0012: ldloc.0
+        IL_0013: ldftn instance class Dog Program/'<>c__DisplayClass0_0'::'<Main>b__0'()
+        IL_0019: newobj instance void class [mscorlib]System.Func`1<class Dog>::.ctor(object, native int)
+        IL_001e: stloc.1
+        IL_001f: ldloc.0
+        IL_0020: ldftn instance class Dog Program/'<>c__DisplayClass0_0'::'<Main>b__1'()
+        IL_0026: newobj instance void class [mscorlib]System.Func`1<class Dog>::.ctor(object, native int)
+        IL_002b: call !!0 Program::FunctionApplier<class Dog>(class [mscorlib]System.Func`1<!!0>)
+        IL_0030: stloc.2
+        IL_0031: ret
+    } // end of method Program::Main
+
+    .method private hidebysig static 
+        !!T FunctionApplier<T> (
+            class [mscorlib]System.Func`1<!!T> func
+        ) cil managed 
+    {
+        // Method begins at RVA 0x208e
+        // Code size 7 (0x7)
+        .maxstack 8
+
+        IL_0000: ldarg.0
+        IL_0001: callvirt instance !0 class [mscorlib]System.Func`1<!!T>::Invoke()
+        IL_0006: ret
+    } // end of method Program::FunctionApplier
+
+    .method public hidebysig specialname rtspecialname 
+        instance void .ctor () cil managed 
+    {
+        // Method begins at RVA 0x2096
+        // Code size 8 (0x8)
+        .maxstack 8
+
+        IL_0000: ldarg.0
+        IL_0001: call instance void [mscorlib]System.Object::.ctor()
+        IL_0006: nop
+        IL_0007: ret
+    } // end of method Program::.ctor
+
+} // end of class Program
+
+.class public auto ansi beforefieldinit Animal
+    extends [mscorlib]System.Object
+{
+    // Methods
+    .method public hidebysig newslot virtual 
+        instance class Animal GiveBirth () cil managed 
+    {
+        // Method begins at RVA 0x209f
+        // Code size 6 (0x6)
+        .maxstack 8
+
+        IL_0000: newobj instance void Animal::.ctor()
+        IL_0005: ret
+    } // end of method Animal::GiveBirth
+
+    .method public hidebysig specialname rtspecialname 
+        instance void .ctor () cil managed 
+    {
+        // Method begins at RVA 0x2096
+        // Code size 8 (0x8)
+        .maxstack 8
+
+        IL_0000: ldarg.0
+        IL_0001: call instance void [mscorlib]System.Object::.ctor()
+        IL_0006: nop
+        IL_0007: ret
+    } // end of method Animal::.ctor
+
+} // end of class Animal
+
+.class public auto ansi beforefieldinit Dog
+    extends Animal
+{
+    // Methods
+    .method public hidebysig virtual 
+        instance class Animal GiveBirth () cil managed 
+    {
+        .custom instance void ReturnTypeAttribute::.ctor(class [mscorlib]System.Type) = (
+            01 00 03 44 6f 67 00 00
+        )
+        // Method begins at RVA 0x20a6
+        // Code size 6 (0x6)
+        .maxstack 8
+
+        IL_0000: newobj instance void Dog::.ctor()
+        IL_0005: ret
+    } // end of method Dog::GiveBirth
+
+    .method public hidebysig specialname rtspecialname 
+        instance void .ctor () cil managed 
+    {
+        // Method begins at RVA 0x20ad
+        // Code size 8 (0x8)
+        .maxstack 8
+
+        IL_0000: ldarg.0
+        IL_0001: call instance void Animal::.ctor()
+        IL_0006: nop
+        IL_0007: ret
+    } // end of method Dog::.ctor
+
+} // end of class Dog
+```
+
+**case j**
+```csharp
+
+```
+
 ### 7.  How Design2 plays with other .Net code
 
 Since this Design uses type erasure, and the types are put back in using the attribute, any code written in other .Net languages which do not support the attribute, or in older versions of C# will be oblivious to the covariant return type. Instead they will see the original return type.
