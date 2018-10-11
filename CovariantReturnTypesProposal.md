@@ -5111,8 +5111,147 @@ Here is the emitted IL for this test case:
 ```
 
 **case j**
-```csharp
 
+At the moment attributes cannot use Type parameters. This makes the following code impossible to write in C#:
+
+```csharp
+public abstract class Factory<T>
+{
+    public abstract T Create();
+}
+
+public abstract class DerivedFactory<TDerived, TBase> : Factory<TBase> where TDerived : TBase
+{
+    [ReturnType(typeof(TDerived))]
+    public abstract override TBase Create(); //Should Compile
+}
+```
+
+However, in CIL it is theoretically possible for attributes to use type parameters. However I believe there may be issues when using it in practice - see https://github.com/dotnet/csharplang/blob/master/meetings/2017/LDM-2017-02-21.md#generic-attributes. I don't know whether this would effect us here, since this attribute is only designed to be used at compile time. However given that this is only a proposal I will not investigate this further for now.
+
+Either way, there are many other ways to indicate to the compiler the return type to cast to, so we can deal with this case as and when we come to it.
+
+The second example in this test case is:
+
+```csharp
+public abstract class Factory<T>
+{
+    public abstract T Create();
+}
+
+public class Animal
+{
+}
+
+public class Dog : Animal
+{
+}
+
+public class DogFactory : Factory<Animal>
+{
+    public override Dog Create() => new Dog(); //should compile
+}
+```
+
+This works absolutely fine, generating the following IL:
+
+```csharp
+.assembly Covariant {}
+.assembly extern mscorlib {}
+.class public auto ansi abstract beforefieldinit Factory`1<T>
+    extends [mscorlib]System.Object
+{
+    // Methods
+    .method public hidebysig newslot abstract virtual 
+        instance !T Create () cil managed 
+    {
+    } // end of method Factory`1::Create
+
+    .method family hidebysig specialname rtspecialname 
+        instance void .ctor () cil managed 
+    {
+        // Method begins at RVA 0x2050
+        // Code size 8 (0x8)
+        .maxstack 8
+
+        IL_0000: ldarg.0
+        IL_0001: call instance void [mscorlib]System.Object::.ctor()
+        IL_0006: nop
+        IL_0007: ret
+    } // end of method Factory`1::.ctor
+
+} // end of class Factory`1
+
+.class public auto ansi beforefieldinit Animal
+    extends [mscorlib]System.Object
+{
+    // Methods
+    .method public hidebysig specialname rtspecialname 
+        instance void .ctor () cil managed 
+    {
+        // Method begins at RVA 0x2050
+        // Code size 8 (0x8)
+        .maxstack 8
+
+        IL_0000: ldarg.0
+        IL_0001: call instance void [mscorlib]System.Object::.ctor()
+        IL_0006: nop
+        IL_0007: ret
+    } // end of method Animal::.ctor
+
+} // end of class Animal
+
+.class public auto ansi beforefieldinit Dog
+    extends Animal
+{
+    // Methods
+    .method public hidebysig specialname rtspecialname 
+        instance void .ctor () cil managed 
+    {
+        // Method begins at RVA 0x2059
+        // Code size 8 (0x8)
+        .maxstack 8
+
+        IL_0000: ldarg.0
+        IL_0001: call instance void Animal::.ctor()
+        IL_0006: nop
+        IL_0007: ret
+    } // end of method Dog::.ctor
+
+} // end of class Dog
+
+.class public auto ansi beforefieldinit DogFactory
+    extends class Factory`1<class Animal>
+{
+    // Methods
+    .method public hidebysig virtual 
+        instance class Animal Create () cil managed 
+    {
+        .custom instance void ReturnTypeAttribute::.ctor(class [mscorlib]System.Type) = (
+            01 00 03 44 6f 67 00 00
+        )
+        // Method begins at RVA 0x2062
+        // Code size 6 (0x6)
+        .maxstack 8
+
+        IL_0000: newobj instance void Dog::.ctor()
+        IL_0005: ret
+    } // end of method DogFactory::Create
+
+    .method public hidebysig specialname rtspecialname 
+        instance void .ctor () cil managed 
+    {
+        // Method begins at RVA 0x2069
+        // Code size 8 (0x8)
+        .maxstack 8
+
+        IL_0000: ldarg.0
+        IL_0001: call instance void class Factory`1<class Animal>::.ctor()
+        IL_0006: nop
+        IL_0007: ret
+    } // end of method DogFactory::.ctor
+
+} // end of class DogFactory
 ```
 
 ### 7.  How Design2 plays with other .Net code
@@ -5279,4 +5418,10 @@ This may lead to unexpected performance issues.
 Wherever a method with the ReturnTypeAttribute is consumed, casts will have to be added to the IL.
 
 This makes this a far larger change to Roslyn than Design1, which only required local changes. Instead this Design would presumably require changing Roslyn in numerous places to make sure the cast is inserted. This is unlikely to happen for a design which already has many weaknesses.
+
+**5. Added complexity when it comes to creating delegates**
+
+See the emited IL for test case J. In order for a delegate to have the desired return type, instead of creating a delegate directly from the Method, it is neccessary to create a lambda which calls the method and then casts the returned value.
+
+Not only does this add complexity to the compiler, but it also will cause performance issues by adding an extra function call.
 
