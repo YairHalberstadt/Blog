@@ -5425,3 +5425,128 @@ See the emited IL for test case J. In order for a delegate to have the desired r
 
 Not only does this add complexity to the compiler, but it also will cause performance issues by adding an extra function call.
 
+### 9. Design3 (explicit virtual method overrides)
+
+In my opinion, both Design1 and Design2 suffer from an issue which Anders Hejlsberg called Simplexity. They attempt to do something inherently complex, and then provide a simple abstraction over the behaviour which hides the complexity. Unfortunately neither abstraction is perfect, and this can lead to unexpected behaviour - whether missing attributes in Design1, or hidden boxing in Design2.
+
+The aim in this design is not to provide an abstraction which simulates Covariant return types, but to provide a mechanism by which programmers can simulate it themselves.
+
+As we have already seen, it is possible to simulate Covariant return types when implementing an interface using Explicit Interface Implementations. 
+
+For example:
+
+```csharp
+public interface IAnimal
+{
+    IAnimal GiveBirth();
+}
+
+public class Dog : IAnimal
+{
+    IAnimal IAnimal.GiveBirth() => GiveBirth();
+    
+    public Dog GiveBirth() => new Dog();
+}
+```
+
+Here when calling `IAnimal.GiveBirth()` an `IAnimal` is returned, but when calling `Dog.GiveBirth()` a `Dog` is returned. However they both end up calling the same Method. Thus the public API 'looks' exactly the same as it would if the CLR supported true Covariant Overrides.
+
+This is the same technique as Design1 uses. However since Design1 does this all under the hood, it can lead to unexpected behaviour such as missing attributes, and unexpected function calls. Here however it is perfectly clear to both the writer and the consumer what is going on, and they can work with that.
+
+The porposal for this design is to add the ability to explicitly overide virtual methods:
+
+```csharp
+public class Animal
+{
+    public virtual Animal GiveBirth() => new Animal();
+}
+
+public class Dog : Animal
+{
+    Animal base.GiveBirth() => GiveBirth();
+    
+    public virtual Dog GiveBirth() => new Dog();
+}
+```
+
+This syntax is identical to that of Explicit Interface Implementation, except that the base keyword is used instead.
+
+The issue with this syntax is that it may be in some cases ambigous which virtual method is being overriden. For example:
+
+```csharp
+public class Animal
+{
+    public virtual Animal GiveBirth() => new Animal();
+}
+
+public class Dog : Animal
+{
+    public new virtual Animal GiveBirth() => new Dog();
+}
+
+public class Poodle : Dog
+{
+    Animal base.GiveBirth() => new Poodle();
+}
+```
+
+Their are a number of alternatives here.
+
+One is to say that the method being overriden is the same method as would be overriden if an implicit override had been used - i.e.
+
+```csharp
+public class Poodle : Dog
+{
+    public override Animal GiveBirth() => new Poodle(); //overrides Dog.GiveBirth
+}
+```
+
+This is perfectly consistent with the language, but is less flexible. It also doesn't give the ability to mitigate performance issues when their are multiple levels of covariant overrides, as was done in the IL for test cases e and f in Design 1.
+
+The second alternative is to use identical syntax to explicit interface implementation. i.e.
+
+```csharp
+public class Animal
+{
+    public virtual Animal GiveBirth() => new Animal();
+}
+
+public class Dog : Animal
+{
+    public new virtual Animal GiveBirth() => new Dog();
+}
+
+public class Poodle : Dog
+{
+    Animal Dog.GiveBirth() => new Poodle();
+    Animal Animal.GiveBirth() => new Poodle();
+}
+```
+
+This is again perfectly consistent with language, and it can be noticed that this is not an explicit interface implementation due to the convention that interface names start with 'I'.
+
+The third is to use the suggested syntax for default interface methods of `base(type)`:
+
+```csharp
+public class Animal
+{
+    public virtual Animal GiveBirth() => new Animal();
+}
+
+public class Dog : Animal
+{
+    public new virtual Animal GiveBirth() => new Dog();
+}
+
+public class Poodle : Dog
+{
+    Animal base(Dog).GiveBirth() => new Poodle();
+    Animal base(Animal).GiveBirth() => new Poodle();
+}
+```
+
+I feel that this overkill though. My preffered syntax is the second.
+
+In terms of what this gets compiled down to, the emmited method is a private final method named `BaseType.Method` which uses the `.override` keyword to specify which Method it is overriding.
+
+Using this new feature it is possible to generate the IL given for all the test cases in Design1. In order not to repeat myself, I will just give the first example.
