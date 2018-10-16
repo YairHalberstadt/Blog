@@ -5453,7 +5453,7 @@ Here when calling `IAnimal.GiveBirth()` an `IAnimal` is returned, but when calli
 
 This is the same technique as Design1 uses. However since Design1 does this all under the hood, it can lead to unexpected behaviour such as missing attributes, and unexpected function calls. Here however it is perfectly clear to both the writer and the consumer what is going on, and they can work with that.
 
-The porposal for this design is to add the ability to explicitly overide virtual methods:
+The proposal for this design is based off https://github.com/dotnet/csharplang/issues/1618, and aims to add the ability to explicitly overide virtual methods:
 
 ```csharp
 public class Animal
@@ -5471,7 +5471,7 @@ public class Dog : Animal
 
 This syntax is identical to that of Explicit Interface Implementation, except that the base keyword is used instead.
 
-The issue with this syntax is that it may be in some cases ambigous which virtual method is being overriden. For example:
+The issue with this syntax is that it may be in some cases be ambigous which virtual method is being overriden. For example:
 
 ```csharp
 public class Animal
@@ -5550,3 +5550,207 @@ I feel that this overkill though. My preffered syntax is the second.
 In terms of what this gets compiled down to, the emmited method is a private final method named `BaseType.Method` which uses the `.override` keyword to specify which Method it is overriding.
 
 Using this new feature it is possible to generate the IL given for all the test cases in Design1. In order not to repeat myself, I will just give the first example.
+
+```csharp
+class Program
+{
+    static void Main(string[] args)
+    {
+        Animal animal = new Animal();
+        var babyAnimal = animal.GiveBirth(); //type of var should be Animal
+        babyAnimal.GetType(); // should be Animal
+        Dog dog = new Dog();
+        Dog babyDog = dog.GiveBirth(); // should compile and run
+        var babyDog2 = dog.GiveBirth(); // type of var should be Dog
+        babyDog2.GetType(); // should be Dog
+        Animal animal2 = dog;
+        var babyAnimal2 = animal2.GiveBirth(); //type of var should be Animal
+        babyAnimal2.GetType(); // should be Dog
+    }
+}
+
+public class Animal
+{
+    public virtual Animal GiveBirth() => new Animal();
+}
+
+public class Dog : Animal
+{
+    Animal Animal.GiveBirth() => GiveBirth();
+    public virtual Dog GiveBirth() => new Dog();
+}
+```
+
+Emits the IL
+
+```csharp
+.assembly Covariant {}
+.assembly extern mscorlib {}
+.class private auto ansi beforefieldinit Program
+    extends [mscorlib]System.Object
+{
+    // Methods
+    .method private hidebysig static 
+        void Main (
+            string[] args
+        ) cil managed 
+    {
+        // Method begins at RVA 0x2050
+        // Code size 71 (0x47)
+        .entrypoint
+        .maxstack 1
+        .locals init (
+            [0] class Animal,
+            [1] class Animal,
+            [2] class Dog,
+            [3] class Dog,
+            [4] class Dog,
+            [5] class Animal,
+            [6] class Animal
+        )
+
+        IL_0000: nop
+        IL_0001: newobj instance void Animal::.ctor()
+        IL_0006: stloc.0
+        IL_0007: ldloc.0
+        IL_0008: callvirt instance class Animal Animal::GiveBirth()
+        IL_000d: stloc.1
+        IL_000e: ldloc.1
+        IL_000f: callvirt instance class [mscorlib]System.Type [mscorlib]System.Object::GetType()
+        IL_0014: pop
+        IL_0015: newobj instance void Dog::.ctor()
+        IL_001a: stloc.2
+        IL_001b: ldloc.2
+        IL_001c: callvirt instance class Dog Dog::GiveBirth()
+        IL_0021: stloc.3
+        IL_0022: ldloc.2
+        IL_0023: callvirt instance class Dog Dog::GiveBirth()
+        IL_0028: stloc.s 4
+        IL_002a: ldloc.s 4
+        IL_002c: callvirt instance class [mscorlib]System.Type [mscorlib]System.Object::GetType()
+        IL_0031: pop
+        IL_0032: ldloc.2
+        IL_0033: stloc.s 5
+        IL_0035: ldloc.s 5
+        IL_0037: callvirt instance class Animal Animal::GiveBirth()
+        IL_003c: stloc.s 6
+        IL_003e: ldloc.s 6
+        IL_0040: callvirt instance class [mscorlib]System.Type [mscorlib]System.Object::GetType()
+        IL_0045: pop
+        IL_0046: ret
+    } // end of method Program::Main
+
+    .method public hidebysig specialname rtspecialname 
+        instance void .ctor () cil managed 
+    {
+        // Method begins at RVA 0x20a3
+        // Code size 8 (0x8)
+        .maxstack 8
+
+        IL_0000: ldarg.0
+        IL_0001: call instance void [mscorlib]System.Object::.ctor()
+        IL_0006: nop
+        IL_0007: ret
+    } // end of method Program::.ctor
+
+} // end of class Program
+
+
+.class public auto ansi beforefieldinit Animal
+    extends [mscorlib]System.Object
+{
+    // Methods
+    .method public hidebysig newslot virtual 
+        instance class Animal GiveBirth () cil managed 
+    {
+        // Method begins at RVA 0x2050
+        // Code size 6 (0x6)
+        .maxstack 8
+
+        IL_0000: newobj instance void Animal::.ctor()
+        IL_0005: ret
+    } // end of method Animal::GiveBirth
+
+    .method public hidebysig specialname rtspecialname 
+        instance void .ctor () cil managed 
+    {
+        // Method begins at RVA 0x2057
+        // Code size 8 (0x8)
+        .maxstack 8
+
+        IL_0000: ldarg.0
+        IL_0001: call instance void [mscorlib]System.Object::.ctor()
+        IL_0006: nop
+        IL_0007: ret
+    } // end of method Animal::.ctor
+
+} // end of class Animal
+
+.class public auto ansi beforefieldinit Dog
+    extends Animal
+{
+    // Methods
+    .method private final hidebysig virtual 
+        instance class Animal Animal.GiveBirth () cil managed 
+    {
+    
+        .override Animal::GiveBirth
+        // Method begins at RVA 0x2058
+        // Code size 7 (0x7)
+        .maxstack  8
+        .locals init (object V_0)
+
+        IL_0000:  nop
+        IL_0001:  ldarg.0
+        IL_0002:  tail.
+        IL_0004:  callvirt   instance class Dog Dog::GiveBirth()
+        IL_0009:  ret
+    } // end of method Dog::Animal.GiveBirth
+
+    .method public hidebysig newslot virtual 
+        instance class Dog GiveBirth() cil managed
+    {
+        // Method begins at RVA 0x2060
+        // Code size 6 (0x6)
+        .maxstack 8
+
+        IL_0000: newobj instance void Dog::.ctor()
+        IL_0005: ret
+    }// end of method Dog::GiveBirth
+
+    .method public hidebysig specialname rtspecialname 
+        instance void .ctor () cil managed 
+    {
+        // Method begins at RVA 0x2067
+        // Code size 8 (0x8)
+        .maxstack 8
+
+        IL_0000: ldarg.0
+        IL_0001: call instance void Animal::.ctor()
+        IL_0006: nop
+        IL_0007: ret
+    } // end of method Dog::.ctor
+
+} // end of class Dog
+```
+
+#### Precise Specification
+
+Given a class 'TBase', and a class 'TDerived' which is derived from TBase, and TBase defines a virtual or abstract method 'SomeMethod', and there is no class 'TInBetween' such that TDerived is derived from TInBetween, and TInBetween is derived from TBase, and TInBetween provides a non-explicit override of SomeMethod which marks SomeMethod as sealed .
+
+Then TDerived may define an ExplicitMethodOverride
+
+```
+ExplicitMethodOverride :
+	ReturnType BaseType '.' MethodName '(' TypeArguments* ')' MethodBody
+```
+
+Where ReturnType must be the same as the Return Type of SomeMethod, and BaseType must be 'TBase', and MethodName must be 'SomeMethod'. The rules for the Type Arguments and the MethodBody are the same as for any other override of a virtual/abstract method.
+
+Then a method will be generated in IL wich is marked as private final, and has the name 'BaseType.MethodName', and uses the '.override' syntax to override TBase::SomeMethod, and whose body corresponds to that which should be generated for MethodBody.
+
+An ExplicitMethodOverride cannnot be marked as private, public, internal, protected, abstract, virtual or sealed. The grammer given above is the only valid grammar.
+
+Furthermore, if an explicit method override is provided, no warning should occur if another method is provided which hides SomeMethod and does not use the new keyword.
+
+
