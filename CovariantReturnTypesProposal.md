@@ -5751,6 +5751,8 @@ Then a method will be generated in IL wich is marked as private final, and has t
 
 An ExplicitMethodOverride cannnot be marked as private, public, internal, protected, abstract, virtual or sealed. The grammer given above is the only valid grammar.
 
-Furthermore, if an explicit method override is provided, no warning should occur if another method is provided which hides SomeMethod and does not use the new keyword.
+Furthermore, if an explicit method override is provided, no warning should occur if another method is provided which hides SomeMethod and does not use the new keyword. 
 
+It will be a compile time error to provide two explicit overrides of the same method, or an explicit and implicit override of the same method, but it is not an error to provide an explicit override of a method, and an explicit or implicit override of another method which overrides that first method.
 
+If TDerived provides an explicit override of 'TBase::SomeMethod', and TDerived has method with at least the same visibility as 'TBase::SomeMethod', the same name as SomeMethod and the same type arguments as SomeMethod, currently a runtime error '`MissingMethodException` will occur if `TDerived::SomeMethod` is called. There is no way to fix this which would be backwards compatible with old C# versions and other languages. As such it will be a compile time error not to provide such a method.
