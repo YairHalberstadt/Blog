@@ -5755,4 +5755,8 @@ Furthermore, if an explicit method override is provided, no warning should occur
 
 It will be a compile time error to provide two explicit overrides of the same method, or an explicit and implicit override of the same method, but it is not an error to provide an explicit override of a method, and an explicit or implicit override of another method which overrides that first method.
 
-If TDerived provides an explicit override of 'TBase::SomeMethod', and TDerived has method with at least the same visibility as 'TBase::SomeMethod', the same name as SomeMethod and the same type arguments as SomeMethod, currently a runtime error '`MissingMethodException` will occur if `TDerived::SomeMethod` is called. There is no way to fix this which would be backwards compatible with old C# versions and other languages. As such it will be a compile time error not to provide such a method.
+If TDerived provides an explicit override of 'TBase::SomeMethod', and TDerived has no method with at least the same visibility as 'TBase::SomeMethod', the same name as SomeMethod and the same type arguments as SomeMethod, currently a runtime error `MissingMethodException` will occur in .Net461 if `TDerived::SomeMethod` is called on an instance of TDerived, or if `TBase::SomeMethod` is called on an instance of TDerived. There is no obvious way to fix this on older runtimes. 
+
+The error does not occur in .Net472. However the method `TBase::SomeMethod` will not be hidden on an instance of `TDerived` - eg. it is legal C# to write `new TDerived().SomeMethod()`. There are ways to make this code illegal in future C# versions, but no way to make it illegal in old C# versions. 
+
+As such I suggest it will be a compile time error for TDerived to provide an explicit override of 'TBase::SomeMethod', unless TDerived has a method with at least the same visibility as 'TBase::SomeMethod', the same name as SomeMethod and the same type arguments as SomeMethod.
