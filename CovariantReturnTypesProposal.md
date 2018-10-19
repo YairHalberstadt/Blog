@@ -5545,7 +5545,7 @@ public class Poodle : Dog
 }
 ```
 
-I feel that this overkill though. My preffered syntax is the second.
+I feel that this overkill though. My preffered syntax is the second, and I will be going with it for the remainder of this proposal.
 
 In terms of what this gets compiled down to, the emmited method is a private final method named `BaseType.Method` which uses the `.override` keyword to specify which Method it is overriding.
 
@@ -5757,4 +5757,179 @@ It will be a compile time error to provide two explicit overrides of the same me
 
 If TDerived provides an explicit override of 'TBase::SomeMethod', and TDerived has no method with at least the same visibility as 'TBase::SomeMethod', the same name as SomeMethod and the same type arguments as SomeMethod, the method `TBase::SomeMethod` will not be hidden on an instance of `TDerived` - eg. it is legal C# to write `new TDerived().SomeMethod()`. There are ways to make this code illegal in future C# versions, but no way to make it illegal in old C# versions. In order to preserve backwards compatibility, it thus seems that we will have to make this legal in future versions as well.
 
-As such I suggest it will be a compile time error for TDerived to provide an explicit override of 'TBase::SomeMethod', unless TDerived has a method with at least the same visibility as 'TBase::SomeMethod', the same name as SomeMethod and the same type arguments as SomeMethod. Howeve this point ould be debated.
+As such I suggest it will be a compile time error for TDerived to provide an explicit override of 'TBase::SomeMethod', unless TDerived has a method with at least the same visibility as 'TBase::SomeMethod', the same name as SomeMethod and the same type arguments as SomeMethod. I will be going with this for the remainder of this proposal. However this point could be debated.
+
+#### TestCases
+
+**test case a**
+```csharp
+public class A
+{
+	public virtual void M() => Console.WriteLine("A::M");
+}
+
+/// Should not compile => no method with same signature as A::M()
+//public class B : A
+//{
+//    void A.M() => Console.WriteLine("B::A.M");
+//}
+
+/// Should not compile => no method with same signature as A::M() and equal or greater visibility
+//public class C : A
+//{
+//    void A.M() => Console.WriteLine("C::A.M");
+//    private void M()=> Console.WriteLine("C::M");
+//}
+
+/// Should not compile => no method with same signature as A::M() and equal or greater visibility
+//public class C : A
+//{
+//    void A.M() => Console.WriteLine("C::A.M");
+//    protected void M()=> Console.WriteLine("C::M");
+//}
+
+/// Should not compile => no method with same signature as A::M() and equal or greater visibility
+//public class D : A
+//{
+//    void A.M() => Console.WriteLine("D::A.M");
+//    internal void M()=> Console.WriteLine("D::M");
+//}
+
+/// Should not compile => no method with same signature as A::M() and equal or greater visibility
+//public class E : A
+//{
+//    void A.M() => Console.WriteLine("E::A.M");
+//    protected internal void M()=> Console.WriteLine("E::M");
+//}
+
+/// Should not compile => F::A.M() does not have the same return type as A::M()
+//public class F : A
+//{
+//	  int A.M()
+//	  {
+//		  Console.WriteLine("F::M");
+//		  return 0;
+//	  }
+//	  public void M() => Console.WriteLine("F::M");
+//}
+
+/// Should not compile => no method with same signature as A::M()
+//public class G : A
+//{
+//    void A.M() => Console.WriteLine("G::A.M");
+//    public void M(int x)=> Console.WriteLine("G::M");
+//}
+
+/// Should not compile => multiple overrides of A::M()
+//public class H : A
+//{
+//    void A.M() => Console.WriteLine("H::A.M");
+//    public override void M()=> Console.WriteLine("H::M");
+//}
+
+/// Should not compile => multiple overrides of A::M()
+//public class I : A
+//{
+//    void A.M() => Console.WriteLine("I::A.M");
+//    void A.M() => Console.WriteLine("I::A.M");
+//}
+
+/// Should not compile => J::A.M() does not have same type parameters as A::M() 
+//public class J : A
+//{
+//    void A.M(int x) => Console.WriteLine("J::A.M");
+//    public void M() => Console.WriteLine("J::M");
+//}
+
+/// Should not compile => There is no method A::N()
+//public class K : A
+//{
+//    void A.N() => Console.WriteLine("K::A.N");
+//    public void N() => Console.WriteLine("K::N");
+//}
+
+/// Should Compile, without warning that L::M() hides A::M() 
+public class L : A
+{
+	void A.M() => Console.WriteLine("L::A.M");
+
+	public void M() => Console.WriteLine("L::M");
+}
+
+/// Should Compile, without warning that N::M() hides A::M()
+public class N : A
+{
+	void A.M() => Console.WriteLine("N::A.M");
+
+	public int M()
+	{
+		Console.WriteLine("N::M");
+		return 0;
+	}
+}
+
+/// Should Compile
+public class O : A
+{
+	void A.M() => Console.WriteLine("O::A.M");
+
+	public new void M() => Console.WriteLine("O::M");
+}
+
+/// Should Compile
+public class P : A
+{
+	void A.M() => Console.WriteLine("P::A.M");
+
+	public new int M()
+	{
+		Console.WriteLine("P::M");
+		return 0;
+	}
+}
+```
+
+**test case b**
+
+```csharp
+public class A
+{
+	internal virtual void M() => Console.WriteLine("A::M");
+}
+
+/// Should not compile => no method with same signature as A::M() and equal or greater visibility
+//public class C : A
+//{
+//    void A.M() => Console.WriteLine("C::A.M");
+//    private void M()=> Console.WriteLine("C::M");
+//}
+
+/// Should not compile => no method with same signature as A::M() and equal or greater visibility
+//public class C : A
+//{
+//    void A.M() => Console.WriteLine("C::A.M");
+//    protected void M()=> Console.WriteLine("C::M");
+//}
+
+/// Should Compile
+public class D : A
+{
+	void A.M() => Console.WriteLine("D::A.M");
+	internal new void M() => Console.WriteLine("D::M");
+}
+
+/// Should Compile
+public class E : A
+{
+	void A.M() => Console.WriteLine("E::A.M");
+	protected internal new void M() => Console.WriteLine("E::M");
+}
+
+/// Should Compile
+public class F : A
+{
+	void A.M() => Console.WriteLine("F::A.M");
+
+	public new void M() => Console.WriteLine("F::M");
+}
+```
