@@ -5616,7 +5616,10 @@ Emits the IL
         IL_0008: callvirt instance class Animal Animal::GiveBirth()
         IL_000d: stloc.1
         IL_000e: ldloc.1
-        IL_000f: callvirt instance class [mscorlib]System.Type [mscorlib]System.Object::GetType()
+        IL_000f: callvirt instance class [ms
+	
+	
+	corlib]System.Type [mscorlib]System.Object::GetType()
         IL_0014: pop
         IL_0015: newobj instance void Dog::.ctor()
         IL_001a: stloc.2
@@ -5736,7 +5739,7 @@ Emits the IL
 
 #### Precise Specification
 
-Given a class 'TBase', and a class 'TDerived' which is derived from TBase, and TBase defines a virtual or abstract method 'SomeMethod', and there is no class 'TInBetween' such that TDerived is derived from TInBetween, and TInBetween is derived from TBase, and TInBetween provides a non-explicit override of SomeMethod which marks SomeMethod as sealed .
+Given a class 'TBase', and a class 'TDerived' which is derived from TBase, and TBase declares a virtual or abstract method 'SomeMethod', or overrides a virtual or abstract method 'SomeMethod' without marking it as sealed.
 
 Then TDerived may define an ExplicitMethodOverride
 
@@ -5757,7 +5760,13 @@ It will be a compile time error to provide two explicit overrides of the same me
 
 If TDerived provides an explicit override of 'TBase::SomeMethod', and TDerived has no method with at least the same visibility as 'TBase::SomeMethod', the same name as SomeMethod and the same type arguments as SomeMethod, the method `TBase::SomeMethod` will not be hidden on an instance of `TDerived` - eg. it is legal C# to write `new TDerived().SomeMethod()`. There are ways to make this code illegal in future C# versions, but no way to make it illegal in old C# versions. In order to preserve backwards compatibility, it thus seems that we will have to make this legal in future versions as well.
 
-As such I suggest it will be a compile time error for TDerived to provide an explicit override of 'TBase::SomeMethod', unless TDerived has a method with at least the same visibility as 'TBase::SomeMethod', the same name as SomeMethod and the same type arguments as SomeMethod. I will be going with this for the remainder of this proposal. However this point could be debated.
+As such I suggest it will be a compile time error for TDerived to provide an explicit override of 'TBase::SomeMethod', unless TDerived has a method (whether it's own or inherited) with at least the same visibility as 'TBase::SomeMethod', the same name as SomeMethod and the same type arguments as SomeMethod. I will be going with this for the remainder of this proposal. However this point could be debated.
+
+The effects of declaring an explicit method override are as follows:
+
+A) When `callvirt TBase::SomeMethod()` is called on an instance of TDerived, this call is resolvedh to the explicit override of SomeMethod.
+
+B) If TBase::SomeMethod is abstract, then it is legal to provide an explicit method override of TBase::SomeMethod as a concrete implementation of TBase::SomeMethod.
 
 #### TestCases
 
@@ -5931,5 +5940,124 @@ public class F : A
 	void A.M() => Console.WriteLine("F::A.M");
 
 	public new void M() => Console.WriteLine("F::M");
+}
+```
+
+**test case d**
+```csharp
+public class A
+{
+    public virtual void M() => Console.WriteLine("A::M");
+}
+
+public class B : A
+{
+    
+}
+
+/// Should not compile => B has no method M
+//public class C : B
+//{
+//    void B.M() => Console.WriteLine("C::B.M");
+//    public new void M() => Console.WriteLine("C::M");
+//}
+
+/// Should compile
+public class D : B
+{
+    void A.M() => Console.WriteLine("C::A.M");
+    public new void M() => Console.WriteLine("C::M");
+}
+
+public class E : A
+{
+    public new void M() => Console.WriteLine("E::M");
+}
+
+/// Should not compile => method E::M() is not virtual
+//public class F : E
+//{
+//    void F.M() => Console.WriteLine("F::E.M");
+//    public new void M() => Console.WriteLine("F::M");
+//}
+
+/// Should compile => Method E::M() hides A::M() so there is no need for G to declare a method which hides A::M()
+public class G : A
+{
+    void A.M() => Console.WriteLine("G::A.M");
+}
+
+/// Should not compile => G.M is not virtual
+//public class H : G
+//{
+//    void G.M => Console.WriteLine("H::G.M");
+//    public void M() => Console.WriteLine("H::M");
+//}
+
+/// Should not compile => cannot override (or access directly in any way) explicit method overrides
+//public class I : G
+//{
+//    void G.A.M => Console.WriteLine("I::G.A.M");
+//    public void M() => Console.WriteLine("I::M");
+//}
+
+public class J : A
+{
+    void A.M() => Console.WriteLine("J::A.M");
+    public virtual void M() => Console.WriteLine("J::M");
+}
+
+///  Should compile
+public class K : J
+{
+    void A.M() => Console.WriteLine("K::A.M");
+    void J.M() => Console.WriteLine("K::J.M");
+    public new virtual void M() => Console.WriteLine("K::M");
+}
+
+///  Should compile
+public class L : J
+{
+    void J.M() => Console.WriteLine("L::J.M");
+    public new virtual void M() => Console.WriteLine("L::M");
+}
+
+///  Should compile
+public class N : J
+{
+    void A.M() => Console.WriteLine("N::A.M");
+    public new virtual void M() => Console.WriteLine("N::M");
+}
+
+public class O : A
+{
+    public sealed override void M() => Console.WriteLine("O::M");
+}
+
+/// should compile => O sealing M does not matter as P implicitly overrides A.M
+public class P : O
+{
+    void A.M() => Console.WriteLine("P::A.M");
+    public new virtual void M() => Console.WriteLine("P::M");
+}
+
+/// should not compile => O::M is sealed
+//public class Q : O
+//{
+//    void O.M() => Console.WriteLine("Q::O.M");
+//    public new virtual void M() => Console.WriteLine("Q::M");
+//}
+
+public class R : A
+{
+    public override void M() => Console.WriteLine("R::M");
+}
+
+///  Should compile
+public class S : J
+{
+    void A.M() => Console.WriteLine("S::A.M");
+    void R.M() => Console.WriteLine("S::R.M");
+    public new virtual void M() => Console.WriteLine("S::M");
 }
 ```
