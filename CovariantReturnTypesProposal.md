@@ -5741,14 +5741,16 @@ Emits the IL
 
 Given a class 'TBase', and a class 'TDerived' which is derived from TBase, and TBase declares a virtual or abstract method 'SomeMethod', or overrides a virtual or abstract method 'SomeMethod' without marking it as sealed.
 
+And there is no class 'TIntermediate' such that TDerived derives from TIntermediate, and TIntermediate derives from TBase, and TIntermediate overrides TBase implicitly.
+
 Then TDerived may define an ExplicitMethodOverride
 
 ```
 ExplicitMethodOverride :
-	ReturnType BaseType '.' MethodName '(' TypeArguments* ')' MethodBody
+	ReturnType BaseType '.' MethodName GenericTypeArguments? '(' TypeArguments* ')' MethodBody
 ```
 
-Where ReturnType must be the same as the Return Type of SomeMethod, and BaseType must be 'TBase', and MethodName must be 'SomeMethod'. The rules for the Type Arguments and the MethodBody are the same as for any other override of a virtual/abstract method.
+Where ReturnType must be the same as the Return Type of SomeMethod, and BaseType must be 'TBase', and MethodName must be 'SomeMethod'. The rules for the GenericTypeArguments, the Type Arguments and the MethodBody are the same as for any other override of a virtual/abstract method.
 
 Then a method will be generated in IL wich is marked as private final, and has the name 'BaseType.MethodName', and uses the '.override' syntax to override TBase::SomeMethod, and whose body corresponds to that which should be generated for MethodBody.
 
@@ -5756,17 +5758,25 @@ An ExplicitMethodOverride cannnot be marked as private, public, internal, protec
 
 Furthermore, if an explicit method override is provided, no warning should occur if another method is provided which hides SomeMethod and does not use the new keyword. 
 
-It will be a compile time error to provide two explicit overrides of the same method, or an explicit and implicit override of the same method, but it is not an error to provide an explicit override of a method, and an explicit or implicit override of another method which overrides that first method.
+It will be a compile time error to provide two explicit overrides of the same method, or an explicit and implicit override of the same method, but it is not an error to provide an explicit override of a method, and an explicit or implicit override of another method which hides that first method.
 
-If TDerived provides an explicit override of 'TBase::SomeMethod', and TDerived has no method with at least the same visibility as 'TBase::SomeMethod', the same name as SomeMethod and the same type arguments as SomeMethod, the method `TBase::SomeMethod` will not be hidden on an instance of `TDerived` - eg. it is legal C# to write `new TDerived().SomeMethod()`. There are ways to make this code illegal in future C# versions, but no way to make it illegal in old C# versions. In order to preserve backwards compatibility, it thus seems that we will have to make this legal in future versions as well.
+If TDerived provides an explicit override of 'TBase::SomeMethod', and TDerived has no method which hides 'TBase::SomeMethod' and has at least the same visibility as 'TBase::SomeMethod', then the method `TBase::SomeMethod` will not be hidden on an instance of `TDerived` - eg. it is legal C# to write `new TDerived().SomeMethod()`. There are ways to make this code illegal in future C# versions, but no way to make it illegal in old C# versions. In order to preserve backwards compatibility, it thus seems that we will have to make this legal in future versions as well.
 
-As such I suggest it will be a compile time error for TDerived to provide an explicit override of 'TBase::SomeMethod', unless TDerived has a method (whether it's own or inherited) with at least the same visibility as 'TBase::SomeMethod', the same name as SomeMethod and the same type arguments as SomeMethod. I will be going with this for the remainder of this proposal. However this point could be debated.
+As such I suggest it will be a compile time error for TDerived to provide an explicit override of 'TBase::SomeMethod', unless TDerived has a method (whether it's own or inherited) which hides 'TBase::SomeMethod' and has at least the same visibility as 'TBase::SomeMethod'. I will be going with this for the remainder of this proposal. However this point could be debated.
 
 The effects of declaring an explicit method override are as follows:
 
-A) When `callvirt TBase::SomeMethod()` is called on an instance of TDerived, this call is resolvedh to the explicit override of SomeMethod.
+A) When `callvirt TBase::SomeMethod()` is called on an instance of TDerived, this call is resolved to the explicit override of `TBase::SomeMethod()`.
 
-B) If TBase::SomeMethod is abstract, then it is legal to provide an explicit method override of TBase::SomeMethod as a concrete implementation of TBase::SomeMethod.
+B) IF `TBase::SomeMethod` overrides `TBaseBase::SomeMethod`, when `callvirt TBaseBase::SomeMethod()` is called on an instance of TDerived, this call is resolved to the explicit override of `TBase::SomeMethod()`.
+
+C) If `TBase::SomeMethod` is abstract, then an explicit method override is considered a concrete implementation of `TBase::SomeMethod`.
+
+D) An explicit method override is marked `private` and cannot be called directly. It can only be called via virtual method resolution, as described above (not taking into account calls via Reflection or unsafe code).
+
+E) An explicit method override is marked `final` and cannot be overriden directly. However if `TDerivedDerived` is derived from `TDerived`, then `TDerivedDerived` may explicitly override `TBase::SomeMethod`, even though `TDerived` explicitly overrides `TBase::SomeMethod`.
+
+F) A call to `TBase.SomeMethod()` in an explicit method override of `TBase::SomeMethod` calls `TBase::SomeMethod`.
 
 #### TestCases
 
