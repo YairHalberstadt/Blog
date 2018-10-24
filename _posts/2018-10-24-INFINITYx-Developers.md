@@ -37,6 +37,6 @@ My point here is, that measuring programming ability quantitatively is a waste o
 
 If they're not, it doesn't matter how cheap they are, they're not worth hiring. There's no point saying "Well he's not very good, but I can get 8 of him for the price of one good developer". If he's not good, he's not going to help you or the team.
 
-The good developer is thus an INFINITYx developer, since he would be able to finish thisproject in a finite amount of time, and the bad developer wouldn't.
+The good developer is thus an ∞x developer, since he would be able to finish thisproject in a finite amount of time, and the bad developer wouldn't.
 
 Note that for other projects, the good developer might be no faster than the bad developer, if it's a simple enough task that's it's easily within his capability. I can probably make a command line guessing game just as quickly as Linus Torvalds. Faster even, since he would insist on using C. And if we were using a technology I happen to be more familiar in, such as WPF, I would almost certainly beat him. But ask me to build an OS, and I would be hundreds of times slower.
