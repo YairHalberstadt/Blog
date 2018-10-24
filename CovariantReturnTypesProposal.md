@@ -5962,7 +5962,7 @@ public class A
 
 public class B : A
 {
-    
+
 }
 
 /// Should not compile => B has no method M
@@ -5975,8 +5975,8 @@ public class B : A
 /// Should compile
 public class D : B
 {
-    void A.M() => Console.WriteLine("C::A.M");
-    public new void M() => Console.WriteLine("C::M");
+    void A.M() => Console.WriteLine("D::A.M");
+    public new void M() => Console.WriteLine("D::M");
 }
 
 public class E : A
@@ -5987,20 +5987,20 @@ public class E : A
 /// Should not compile => method E::M() is not virtual
 //public class F : E
 //{
-//    void F.M() => Console.WriteLine("F::E.M");
+//    void E.M() => Console.WriteLine("F::E.M");
 //    public new void M() => Console.WriteLine("F::M");
 //}
 
 /// Should compile => Method E::M() hides A::M() so there is no need for G to declare a method which hides A::M()
-public class G : A
+public class G : E
 {
     void A.M() => Console.WriteLine("G::A.M");
 }
 
-/// Should not compile => G.M is not virtual
-//public class H : G
+/// Should not compile => E::M is not virtual
+//public class H : E
 //{
-//    void G.M => Console.WriteLine("H::G.M");
+//    void E.M => Console.WriteLine("H::E.M");
 //    public void M() => Console.WriteLine("H::M");
 //}
 
@@ -6017,7 +6017,7 @@ public class J : A
     public virtual void M() => Console.WriteLine("J::M");
 }
 
-///  Should compile
+///  Should compile as J does not override A::M implicitly
 public class K : J
 {
     void A.M() => Console.WriteLine("K::A.M");
@@ -6025,7 +6025,7 @@ public class K : J
     public new virtual void M() => Console.WriteLine("K::M");
 }
 
-///  Should compile
+///  Should compile as J does not override A::M implicitly
 public class L : J
 {
     void J.M() => Console.WriteLine("L::J.M");
@@ -6044,12 +6044,12 @@ public class O : A
     public sealed override void M() => Console.WriteLine("O::M");
 }
 
-/// should compile => O sealing M does not matter as P implicitly overrides A.M
-public class P : O
-{
-    void A.M() => Console.WriteLine("P::A.M");
-    public new virtual void M() => Console.WriteLine("P::M");
-}
+/// should not compile => O::M already overrides A::M
+//public class P : O
+//{
+//      void A.M() => Console.WriteLine("P::A.M");
+//      public new virtual void M() => Console.WriteLine("P::M");
+//}
 
 /// should not compile => O::M is sealed
 //public class Q : O
@@ -6063,11 +6063,53 @@ public class R : A
     public override void M() => Console.WriteLine("R::M");
 }
 
+///  Should not compile => R::M already overrides A::M
+//public class S : R
+//{
+//    void A.M() => Console.WriteLine("S::A.M");
+//    public new virtual void M() => Console.WriteLine("S::M");
+//}
+
 ///  Should compile
-public class S : J
+public class T : R
 {
-    void A.M() => Console.WriteLine("S::A.M");
-    void R.M() => Console.WriteLine("S::R.M");
-    public new virtual void M() => Console.WriteLine("S::M");
+    void R.M() => Console.WriteLine("T::R.M");
+    public new virtual void M() => Console.WriteLine("T::M");
+}
+
+public class Program
+{
+    public static void Main(string[] args)
+    {
+        var a = new A();
+        a.M(); // prints "A::M"
+        var d = new D();
+        d.M(); // prints "D::M"
+        ((B)d).M(); // prints "D::A.M"
+        ((A)d).M(); // prints "D::A.M"
+        var g = new G();
+        g.M(); // prints "E::M"
+        ((E)g).M(); // prints "E::M"
+        ((A)g).M(); // prints "G::A.M"
+        var j = new J();
+        j.M(); // prints "J::M"
+        ((A)j).M(); // prints "J::A.M"
+        var k = new K();
+        k.M(); // prints "K::M"
+        ((J)k).M(); // prints "K::J.M"
+        ((A)k).M(); // prints "K::A.M"
+        var l = new L();
+        l.M(); // prints "L::M"
+        ((J)l).M(); // prints "L::J.M"
+        ((A)l).M(); // prints "A::M"
+        var n = new N();
+        n.M(); // prints "N::M"
+        ((J)n).M(); // prints "J::M"
+        ((A)n).M(); // prints "N::A.M"
+        var t = new T();
+        t.M(); // prints "T::M"
+        ((R)t).M(); // prints "T::R.M"
+        ((A)t).M(); // prints "T::R.M"
+    }
 }
 ```
