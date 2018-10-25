@@ -5754,7 +5754,7 @@ Where ReturnType must be the same as the Return Type of SomeMethod, and BaseType
 
 Then a method will be generated in IL wich is marked as private final, and has the name 'BaseType.MethodName', and uses the '.override' syntax to override TBase::SomeMethod, and whose body corresponds to that which should be generated for MethodBody.
 
-An ExplicitMethodOverride cannnot be marked as private, public, internal, protected, abstract, virtual or sealed. The grammer given above is the only valid grammar.
+An ExplicitMethodOverride cannnot be marked as private, public, internal, protected, protected internal, private protected, new, override, abstract, virtual or sealed. It's return type can be ref or ref readonly however, if it is overriding a method whose return type is ref or ref readonly respectively.
 
 Furthermore, if an explicit method override is provided, no warning should occur if another method is provided which hides SomeMethod and does not use the new keyword. 
 
@@ -5950,6 +5950,84 @@ public class F : A
 	void A.M() => Console.WriteLine("F::A.M");
 
 	public new void M() => Console.WriteLine("F::M");
+}
+```
+**test case c**
+
+```csharp
+public class A
+{
+	public virtual void M() => Console.WriteLine("A::M");
+}
+
+public class B : A
+{
+	///None of these should compile => these modifiers are not valid on explicit method overrides
+	//private void A.M => Console.WriteLine("B::A.M");
+	//internal void A.M => Console.WriteLine("B::A.M");
+	//protected void A.M => Console.WriteLine("B::A.M");
+	//protected internal void A.M => Console.WriteLine("B::A.M");
+	//private protected void A.M => Console.WriteLine("B::A.M");
+	//public void A.M => Console.WriteLine("B::A.M");
+	//sealed void A.M => Console.WriteLine("B::A.M");
+	//virtual void A.M => Console.WriteLine("B::A.M");
+	//new void A.M => Console.WriteLine("B::A.M");
+	//override void A.M => Console.WriteLine("B::A.M");
+	public new void M() => Console.WriteLine("B::M");
+}
+
+public abstract class C
+{
+	public abstract void M();
+}
+
+public class D : C
+{
+	void C.M() => Console.WriteLine("D::C.M");
+	public new void M() => Console.WriteLine("D::M");
+}
+
+///Should not compile => explicit method overrides cannot be abstract
+//public abstract class E : C
+//{
+//	abstract void C.M();
+//	public new void M() => Console.WriteLine("E::M");
+//}
+
+public class F
+{
+	protected int field;
+	public virtual ref int M1()
+	{
+		Console.WriteLine("F::M1");
+		return ref field;
+	}
+
+	public virtual ref readonly int M2()
+	{
+		Console.WriteLine("F::M2");
+		return ref field;
+	}
+}
+
+public class G : F
+{
+	/// any other return type, such as int, ref readonly int, etc. should not compile
+	ref int F.M1()
+	{
+		Console.WriteLine("G::F.M1");
+		return ref field;
+	}
+
+	/// any other return type, such as int, ref int, etc. should not compile
+	ref readonly int F.M2()
+	{
+		Console.WriteLine("G::F.M2");
+		return ref field;
+	}
+
+	public new void M1() => Console.WriteLine("G::M1");
+	public new void M2() => Console.WriteLine("G::M2");
 }
 ```
 
