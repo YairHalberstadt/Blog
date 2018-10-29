@@ -6179,7 +6179,7 @@ public class Program
         var l = new L();
         l.M(); // prints "L::M"
         ((J)l).M(); // prints "L::J.M"
-        ((A)l).M(); // prints "A::M"
+        ((A)l).M(); // prints "J::A.M"
         var n = new N();
         n.M(); // prints "N::M"
         ((J)n).M(); // prints "J::M"
@@ -6190,4 +6190,606 @@ public class Program
         ((A)t).M(); // prints "T::R.M"
     }
 }
+```
+
+#### Emited IL For Test Case D
+
+As test case d is the most complex, I think emited IL for this test case should be sufficient as a proof of concept.
+
+You can test it on https://www.tutorialspoint.com/compile_ilasm_online.php
+
+```csharp
+.assembly Covariant {}
+.assembly extern mscorlib {}
+.class public auto ansi beforefieldinit A
+    extends [mscorlib]System.Object
+{
+    // Methods
+    .method public hidebysig newslot virtual 
+        instance void M () cil managed 
+    {
+        // Method begins at RVA 0x2050
+        // Code size 12 (0xc)
+        .maxstack 8
+
+        IL_0000: ldstr "A::M"
+        IL_0005: call void [mscorlib]System.Console::WriteLine(string)
+        IL_000a: nop
+        IL_000b: ret
+    } // end of method A::M
+
+    .method public hidebysig specialname rtspecialname 
+        instance void .ctor () cil managed 
+    {
+        // Method begins at RVA 0x205d
+        // Code size 8 (0x8)
+        .maxstack 8
+
+        IL_0000: ldarg.0
+        IL_0001: call instance void [mscorlib]System.Object::.ctor()
+        IL_0006: nop
+        IL_0007: ret
+    } // end of method A::.ctor
+
+} // end of class A
+
+.class public auto ansi beforefieldinit B
+    extends A
+{
+    // Methods
+    .method public hidebysig specialname rtspecialname 
+        instance void .ctor () cil managed 
+    {
+        // Method begins at RVA 0x2066
+        // Code size 8 (0x8)
+        .maxstack 8
+
+        IL_0000: ldarg.0
+        IL_0001: call instance void A::.ctor()
+        IL_0006: nop
+        IL_0007: ret
+    } // end of method B::.ctor
+
+} // end of class B
+
+.class public auto ansi beforefieldinit D
+    extends B
+{
+    // Methods
+    .method private final hidebysig virtual 
+        instance void A.M () cil managed 
+    {
+        .override A::M
+        // Method begins at RVA 0x206f
+        // Code size 12 (0xc)
+        .maxstack 8
+
+        IL_0000: ldstr "D::A.M"
+        IL_0005: call void [mscorlib]System.Console::WriteLine(string)
+        IL_000a: nop
+        IL_000b: ret
+    } // end of method D::A.M
+
+    .method public hidebysig 
+        instance void M () cil managed 
+    {
+        // Method begins at RVA 0x207c
+        // Code size 12 (0xc)
+        .maxstack 8
+
+        IL_0000: ldstr "D::M"
+        IL_0005: call void [mscorlib]System.Console::WriteLine(string)
+        IL_000a: nop
+        IL_000b: ret
+    } // end of method D::M
+
+    .method public hidebysig specialname rtspecialname 
+        instance void .ctor () cil managed 
+    {
+        // Method begins at RVA 0x2089
+        // Code size 8 (0x8)
+        .maxstack 8
+
+        IL_0000: ldarg.0
+        IL_0001: call instance void B::.ctor()
+        IL_0006: nop
+        IL_0007: ret
+    } // end of method D::.ctor
+
+} // end of class D
+
+.class public auto ansi beforefieldinit E
+    extends A
+{
+    // Methods
+    .method public hidebysig 
+        instance void M () cil managed 
+    {
+        // Method begins at RVA 0x2092
+        // Code size 12 (0xc)
+        .maxstack 8
+
+        IL_0000: ldstr "E::M"
+        IL_0005: call void [mscorlib]System.Console::WriteLine(string)
+        IL_000a: nop
+        IL_000b: ret
+    } // end of method E::M
+
+    .method public hidebysig specialname rtspecialname 
+        instance void .ctor () cil managed 
+    {
+        // Method begins at RVA 0x2066
+        // Code size 8 (0x8)
+        .maxstack 8
+
+        IL_0000: ldarg.0
+        IL_0001: call instance void A::.ctor()
+        IL_0006: nop
+        IL_0007: ret
+    } // end of method E::.ctor
+
+} // end of class E
+
+.class public auto ansi beforefieldinit G
+    extends E
+{
+    // Methods
+    .method private final hidebysig virtual 
+        instance void A.M () cil managed 
+    {
+        .override A::M
+        // Method begins at RVA 0x209f
+        // Code size 12 (0xc)
+        .maxstack 8
+
+        IL_0000: ldstr "G::A.M"
+        IL_0005: call void [mscorlib]System.Console::WriteLine(string)
+        IL_000a: nop
+        IL_000b: ret
+    } // end of method G::A.M
+
+    .method public hidebysig specialname rtspecialname 
+        instance void .ctor () cil managed 
+    {
+        // Method begins at RVA 0x20ac
+        // Code size 8 (0x8)
+        .maxstack 8
+
+        IL_0000: ldarg.0
+        IL_0001: call instance void E::.ctor()
+        IL_0006: nop
+        IL_0007: ret
+    } // end of method G::.ctor
+
+} // end of class G
+
+.class public auto ansi beforefieldinit J
+    extends A
+{
+    // Methods
+    .method private final hidebysig virtual 
+        instance void A.M () cil managed 
+    {
+        .override A::M
+        // Method begins at RVA 0x20b5
+        // Code size 12 (0xc)
+        .maxstack 8
+
+        IL_0000: ldstr "J::A.M"
+        IL_0005: call void [mscorlib]System.Console::WriteLine(string)
+        IL_000a: nop
+        IL_000b: ret
+    } // end of method J::A.M
+
+    .method public hidebysig newslot virtual 
+        instance void M () cil managed 
+    {
+        // Method begins at RVA 0x20c2
+        // Code size 12 (0xc)
+        .maxstack 8
+
+        IL_0000: ldstr "J::M"
+        IL_0005: call void [mscorlib]System.Console::WriteLine(string)
+        IL_000a: nop
+        IL_000b: ret
+    } // end of method J::M
+
+    .method public hidebysig specialname rtspecialname 
+        instance void .ctor () cil managed 
+    {
+        // Method begins at RVA 0x2066
+        // Code size 8 (0x8)
+        .maxstack 8
+
+        IL_0000: ldarg.0
+        IL_0001: call instance void A::.ctor()
+        IL_0006: nop
+        IL_0007: ret
+    } // end of method J::.ctor
+
+} // end of class J
+
+.class public auto ansi beforefieldinit K
+    extends J
+{
+    // Methods
+    .method private final hidebysig virtual 
+        instance void A.M () cil managed 
+    {
+        .override A::M
+        // Method begins at RVA 0x20cf
+        // Code size 12 (0xc)
+        .maxstack 8
+
+        IL_0000: ldstr "K::A.M"
+        IL_0005: call void [mscorlib]System.Console::WriteLine(string)
+        IL_000a: nop
+        IL_000b: ret
+    } // end of method K::A.M
+
+    .method private final hidebysig virtual 
+        instance void J.M () cil managed 
+    {
+        .override J::M
+        // Method begins at RVA 0x20dc
+        // Code size 12 (0xc)
+        .maxstack 8
+
+        IL_0000: ldstr "K::J.M"
+        IL_0005: call void [mscorlib]System.Console::WriteLine(string)
+        IL_000a: nop
+        IL_000b: ret
+    } // end of method K::J.M
+
+    .method public hidebysig newslot virtual 
+        instance void M () cil managed 
+    {
+        // Method begins at RVA 0x20e9
+        // Code size 12 (0xc)
+        .maxstack 8
+
+        IL_0000: ldstr "K::M"
+        IL_0005: call void [mscorlib]System.Console::WriteLine(string)
+        IL_000a: nop
+        IL_000b: ret
+    } // end of method K::M
+
+    .method public hidebysig specialname rtspecialname 
+        instance void .ctor () cil managed 
+    {
+        // Method begins at RVA 0x20f6
+        // Code size 8 (0x8)
+        .maxstack 8
+
+        IL_0000: ldarg.0
+        IL_0001: call instance void J::.ctor()
+        IL_0006: nop
+        IL_0007: ret
+    } // end of method K::.ctor
+
+} // end of class K
+
+.class public auto ansi beforefieldinit L
+    extends J
+{
+    // Methods
+    .method private final hidebysig virtual 
+        instance void J.M () cil managed 
+    {
+        .override J::M
+        // Method begins at RVA 0x20ff
+        // Code size 12 (0xc)
+        .maxstack 8
+
+        IL_0000: ldstr "L::J.M"
+        IL_0005: call void [mscorlib]System.Console::WriteLine(string)
+        IL_000a: nop
+        IL_000b: ret
+    } // end of method L::J.M
+
+    .method public hidebysig newslot virtual 
+        instance void M () cil managed 
+    {
+        // Method begins at RVA 0x210c
+        // Code size 12 (0xc)
+        .maxstack 8
+
+        IL_0000: ldstr "L::M"
+        IL_0005: call void [mscorlib]System.Console::WriteLine(string)
+        IL_000a: nop
+        IL_000b: ret
+    } // end of method L::M
+
+    .method public hidebysig specialname rtspecialname 
+        instance void .ctor () cil managed 
+    {
+        // Method begins at RVA 0x20f6
+        // Code size 8 (0x8)
+        .maxstack 8
+
+        IL_0000: ldarg.0
+        IL_0001: call instance void J::.ctor()
+        IL_0006: nop
+        IL_0007: ret
+    } // end of method L::.ctor
+
+} // end of class L
+
+.class public auto ansi beforefieldinit N
+    extends J
+{
+    // Methods
+    .method private final hidebysig virtual 
+        instance void A.M () cil managed 
+    {
+        .override A::M
+        // Method begins at RVA 0x2119
+        // Code size 12 (0xc)
+        .maxstack 8
+
+        IL_0000: ldstr "N::A.M"
+        IL_0005: call void [mscorlib]System.Console::WriteLine(string)
+        IL_000a: nop
+        IL_000b: ret
+    } // end of method N::A.M
+
+    .method public hidebysig newslot virtual 
+        instance void M () cil managed 
+    {
+        // Method begins at RVA 0x2126
+        // Code size 12 (0xc)
+        .maxstack 8
+
+        IL_0000: ldstr "N::M"
+        IL_0005: call void [mscorlib]System.Console::WriteLine(string)
+        IL_000a: nop
+        IL_000b: ret
+    } // end of method N::M
+
+    .method public hidebysig specialname rtspecialname 
+        instance void .ctor () cil managed 
+    {
+        // Method begins at RVA 0x20f6
+        // Code size 8 (0x8)
+        .maxstack 8
+
+        IL_0000: ldarg.0
+        IL_0001: call instance void J::.ctor()
+        IL_0006: nop
+        IL_0007: ret
+    } // end of method N::.ctor
+
+} // end of class N
+
+.class public auto ansi beforefieldinit O
+    extends A
+{
+    // Methods
+    .method public final hidebysig virtual 
+        instance void M () cil managed 
+    {
+        // Method begins at RVA 0x2133
+        // Code size 12 (0xc)
+        .maxstack 8
+
+        IL_0000: ldstr "O::M"
+        IL_0005: call void [mscorlib]System.Console::WriteLine(string)
+        IL_000a: nop
+        IL_000b: ret
+    } // end of method O::M
+
+    .method public hidebysig specialname rtspecialname 
+        instance void .ctor () cil managed 
+    {
+        // Method begins at RVA 0x2066
+        // Code size 8 (0x8)
+        .maxstack 8
+
+        IL_0000: ldarg.0
+        IL_0001: call instance void A::.ctor()
+        IL_0006: nop
+        IL_0007: ret
+    } // end of method O::.ctor
+
+} // end of class O
+
+.class public auto ansi beforefieldinit R
+    extends A
+{
+    // Methods
+    .method public hidebysig virtual 
+        instance void M () cil managed 
+    {
+        // Method begins at RVA 0x2140
+        // Code size 12 (0xc)
+        .maxstack 8
+
+        IL_0000: ldstr "R::M"
+        IL_0005: call void [mscorlib]System.Console::WriteLine(string)
+        IL_000a: nop
+        IL_000b: ret
+    } // end of method R::M
+
+    .method public hidebysig specialname rtspecialname 
+        instance void .ctor () cil managed 
+    {
+        // Method begins at RVA 0x2066
+        // Code size 8 (0x8)
+        .maxstack 8
+
+        IL_0000: ldarg.0
+        IL_0001: call instance void A::.ctor()
+        IL_0006: nop
+        IL_0007: ret
+    } // end of method R::.ctor
+
+} // end of class R
+
+.class public auto ansi beforefieldinit T
+    extends R
+{
+    // Methods
+    .method private final hidebysig virtual 
+        instance void R.M () cil managed 
+    {
+        .override R::M
+        // Method begins at RVA 0x214d
+        // Code size 12 (0xc)
+        .maxstack 8
+
+        IL_0000: ldstr "T::R.M"
+        IL_0005: call void [mscorlib]System.Console::WriteLine(string)
+        IL_000a: nop
+        IL_000b: ret
+    } // end of method T::R.M
+
+    .method public hidebysig newslot virtual 
+        instance void M () cil managed 
+    {
+        // Method begins at RVA 0x215a
+        // Code size 12 (0xc)
+        .maxstack 8
+
+        IL_0000: ldstr "T::M"
+        IL_0005: call void [mscorlib]System.Console::WriteLine(string)
+        IL_000a: nop
+        IL_000b: ret
+    } // end of method T::M
+
+    .method public hidebysig specialname rtspecialname 
+        instance void .ctor () cil managed 
+    {
+        // Method begins at RVA 0x2167
+        // Code size 8 (0x8)
+        .maxstack 8
+
+        IL_0000: ldarg.0
+        IL_0001: call instance void R::.ctor()
+        IL_0006: nop
+        IL_0007: ret
+    } // end of method T::.ctor
+
+} // end of class T
+
+.class public auto ansi beforefieldinit Program
+    extends [mscorlib]System.Object
+{
+    // Methods
+    .method public hidebysig static 
+        void Main (
+            string[] args
+        ) cil managed 
+    {
+        .entrypoint
+        // Method begins at RVA 0x2170
+        // Code size 213 (0xd5)
+        .maxstack 1
+        .locals init (
+            [0] class A,
+            [1] class D,
+            [2] class G,
+            [3] class J,
+            [4] class K,
+            [5] class L,
+            [6] class N,
+            [7] class T
+        )
+
+        IL_0000: nop
+        IL_0001: newobj instance void A::.ctor()
+        IL_0006: stloc.0
+        IL_0007: ldloc.0
+        IL_0008: callvirt instance void A::M()
+        IL_000d: nop
+        IL_000e: newobj instance void D::.ctor()
+        IL_0013: stloc.1
+        IL_0014: ldloc.1
+        IL_0015: callvirt instance void D::M()
+        IL_001a: nop
+        IL_001b: ldloc.1
+        IL_001c: callvirt instance void A::M()
+        IL_0021: nop
+        IL_0022: ldloc.1
+        IL_0023: callvirt instance void A::M()
+        IL_0028: nop
+        IL_0029: newobj instance void G::.ctor()
+        IL_002e: stloc.2
+        IL_002f: ldloc.2
+        IL_0030: callvirt instance void G::M()
+        IL_0035: nop
+        IL_0036: ldloc.2
+        IL_0037: callvirt instance void E::M()
+        IL_003c: nop
+        IL_003d: ldloc.2
+        IL_003e: callvirt instance void A::M()
+        IL_0043: nop
+        IL_0044: newobj instance void J::.ctor()
+        IL_0049: stloc.3
+        IL_004a: ldloc.3
+        IL_004b: callvirt instance void J::M()
+        IL_0050: nop
+        IL_0051: ldloc.3
+        IL_0052: callvirt instance void A::M()
+        IL_0057: nop
+        IL_0058: newobj instance void K::.ctor()
+        IL_005d: stloc.s 4
+        IL_005f: ldloc.s 4
+        IL_0061: callvirt instance void K::M()
+        IL_0066: nop
+        IL_0067: ldloc.s 4
+        IL_0069: callvirt instance void J::M()
+        IL_006e: nop
+        IL_006f: ldloc.s 4
+        IL_0071: callvirt instance void A::M()
+        IL_0076: nop
+        IL_0077: newobj instance void L::.ctor()
+        IL_007c: stloc.s 5
+        IL_007e: ldloc.s 5
+        IL_0080: callvirt instance void L::M()
+        IL_0085: nop
+        IL_0086: ldloc.s 5
+        IL_0088: callvirt instance void J::M()
+        IL_008d: nop
+        IL_008e: ldloc.s 5
+        IL_0090: callvirt instance void A::M()
+        IL_0095: nop
+        IL_0096: newobj instance void N::.ctor()
+        IL_009b: stloc.s 6
+        IL_009d: ldloc.s 6
+        IL_009f: callvirt instance void N::M()
+        IL_00a4: nop
+        IL_00a5: ldloc.s 6
+        IL_00a7: callvirt instance void J::M()
+        IL_00ac: nop
+        IL_00ad: ldloc.s 6
+        IL_00af: callvirt instance void A::M()
+        IL_00b4: nop
+        IL_00b5: newobj instance void T::.ctor()
+        IL_00ba: stloc.s 7
+        IL_00bc: ldloc.s 7
+        IL_00be: callvirt instance void T::M()
+        IL_00c3: nop
+        IL_00c4: ldloc.s 7
+        IL_00c6: callvirt instance void A::M()
+        IL_00cb: nop
+        IL_00cc: ldloc.s 7
+        IL_00ce: callvirt instance void A::M()
+        IL_00d3: nop
+        IL_00d4: ret
+    } // end of method Program::Main
+
+    .method public hidebysig specialname rtspecialname 
+        instance void .ctor () cil managed 
+    {
+        // Method begins at RVA 0x205d
+        // Code size 8 (0x8)
+        .maxstack 8
+
+        IL_0000: ldarg.0
+        IL_0001: call instance void [mscorlib]System.Object::.ctor()
+        IL_0006: nop
+        IL_0007: ret
+    } // end of method Program::.ctor
+
+} // end of class Program
 ```
