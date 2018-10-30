@@ -5774,9 +5774,11 @@ C) If `TBase::SomeMethod` is abstract, then an explicit method override is consi
 
 D) An explicit method override is marked `private` and cannot be called directly. It can only be called via virtual method resolution, as described above (not taking into account calls via Reflection or unsafe code).
 
-E) An explicit method override is marked `final` and cannot be overriden directly. However if `TDerivedDerived` is derived from `TDerived`, then `TDerivedDerived` may explicitly override `TBase::SomeMethod`, even though `TDerived` explicitly overrides `TBase::SomeMethod`.
+E) An explicit method override is marked `final` and cannot be overriden directly. However if `TDerivedDerived` is derived from `TDerived`, then `TDerivedDerived` may explicitly or implicitly override `TBase::SomeMethod`, even though `TDerived` explicitly overrides `TBase::SomeMethod`.
 
 F) A call to `TBase.SomeMethod()` in an explicit method override of `TBase::SomeMethod` calls `TBase::SomeMethod`.
+
+G) If `TDerivedDerived` is derived from `TDerived`, and does not explicitly or implicitly override `TBase::SomeMethod`, then if  `callvirt TBase::SomeMethod()` is called on an instance of TDerivedDerived, this call is resolved to the explicit override by TDerived of `TBase::SomeMethod()`.
 
 #### TestCases
 
@@ -6189,6 +6191,51 @@ public class Program
         ((R)t).M(); // prints "T::R.M"
         ((A)t).M(); // prints "T::R.M"
     }
+}
+```
+
+**test case e*
+
+```csharp
+using System;
+
+public class A
+{
+	public virtual void M<T>() => Console.WriteLine($"A::M<{typeof(T)}>");
+}
+
+public class B : A
+{
+    void A.M<T>() => Console.WriteLine($"B::A.M<{typeof(T)}>");
+    
+    public new void M<T>() => Console.WriteLine($"B::M<{typeof(T)}>");
+}
+
+///Should not compile => C::M does not hide A::M<T>
+//public class C : A
+//{
+//    void A.M<T>()=> Console.WriteLine($"C::A.M<{typeof(T)}>");
+//    
+//    public void M() => Console.WriteLine($"C::M");
+//}
+
+public class D<T>
+{
+	public virtual void M() => Console.WriteLine($"A<{typeof(T)}>::M");
+}
+
+public class E<T> : D<T>
+{
+	void D<T>.M() => Console.WriteLine($"E<{typeof(T)}>::D<{typeof(T)}>.M");
+    
+    public new void M() => Console.WriteLine($"E<{typeof(T)}>::M");
+}
+
+public class F : D<int>
+{
+	void D<int>.M() => Console.WriteLine($"F<int>::D.M");
+    
+    public new void M() => Console.WriteLine($"F::M");
 }
 ```
 
