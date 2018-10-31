@@ -6840,3 +6840,63 @@ You can test it on https://www.tutorialspoint.com/compile_ilasm_online.php
 
 } // end of class Program
 ```
+
+### 10. How Design3 plays with other .Net code
+
+No runtime changes are required by Design3.
+
+It also only changes the emited IL for the methods using this feature, and causes no non-local changes.
+
+The methods using this feature are declared private and final.
+
+As such this feature only changes the internal behaviour of the classes on which it is used and not their public API.
+
+As such this feature requires no changes by any language to consume it, and can also be consumed by other IL safely.
+
+Indeed by handcrafting IL to implement this feature, and then compiling it into a dll, and referencing , it is possible to test this feature today in visual studio. Everything, including intellisense, works exactly as expected.
+
+### 11. Design3 Advantages/Disadvantages
+
+#### Advantages
+
+**1. Gives developers flexibility when overriding a method**
+
+As explained above, it is possible to use this feature to implement covariant return types akin to design1.
+
+However it also provides a greater range of flexibility, akin to explicit interface implementations. Now developers could choose to hide a method yet still override the method.
+
+For Example
+
+```csharp
+public class StringBuilder
+{
+    string object.ToString() => "This Is A StringBuilder";
+    
+    public string ToString() => BuildStringInternal();
+}
+```
+
+One obvious use case is hiding an abstract method.
+
+```csharp
+public abstract class A
+{
+    public abstract void A();
+}
+
+public class B : A
+{
+    void A.A() => throw new NotSupportedException();
+    public void A() => Console.WriteLine("A");
+}
+```
+
+**2. simple mapping between C# and IL code**
+
+Unlike design1 there is a one-to-one mapping between the number of IL methods and the number of C# methods. No extra methods are generated behind the scenes.
+
+In fact there's no magic going on here at all. All that is happening is that methods which were previously legal to write in IL could not be written in C#, but now they can.
+
+This makes it easier for developers to reason about what's going on in their code. Unlike design1, they would not be surprised when reflection or attributes don't work as they are expected to, since it's clear from the C# code that the covariant override methods are not actual overrides, but rather methods that simulate overrides.
+
+This also make the feature simpler to implement in the compiler.
