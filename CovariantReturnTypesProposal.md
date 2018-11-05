@@ -5425,6 +5425,10 @@ See the emited IL for test case J. In order for a delegate to have the desired r
 
 Not only does this add complexity to the compiler, but it also will cause performance issues by adding an extra function call.
 
+**6. Tooling will have to be updated to recognise the ReturnTypeAttribute**
+
+Current tooling obviously does not recognise the ReturnTypeAttribute. They will have to be updated to do so. This could be a significant amount of work.
+
 ### 9. Design3 (explicit virtual method overrides)
 
 In my opinion, both Design1 and Design2 suffer from an issue which Anders Hejlsberg called Simplexity. They attempt to do something inherently complex, and then provide a simple abstraction over the behaviour which hides the complexity. Unfortunately neither abstraction is perfect, and this can lead to unexpected behaviour - whether missing attributes in Design1, or hidden boxing in Design2.
@@ -6881,17 +6885,59 @@ One obvious use case is hiding an abstract method.
 ```csharp
 public abstract class A
 {
-    public abstract void A();
+    public abstract void M();
 }
 
 public class B : A
 {
-    void A.A() => throw new NotSupportedException();
-    public void A() => Console.WriteLine("A");
+    void A.M() => throw new NotSupportedException();
+    public void M() => Console.WriteLine("A");
 }
 ```
 
-**2. simple mapping between C# and IL code**
+Or they could use the feature to implement covariant overrides, but add extra steps before or after the overriding method is called.
+
+```csharp
+public abstract class A
+{
+    public abstract object M1();
+    public abstact string M2();
+    public abstact object M3();
+}
+
+public class B : A
+{
+    object A.M1()
+    {
+        Log.Debug("Calling Covariant Override");
+	return M1();
+    }
+    public int M1()
+    {...}
+    
+    string A.M2()
+    {
+        var result = M2();
+	return M2.ToString();
+    }
+    public int M2()
+    {...}
+    
+    object A.M3()
+    {
+        var result = M3();
+	if(result == -1)
+	    throw new Exception();
+	return result;
+    }
+    
+    ///Returns -1 on failure
+    public int M3()
+    {...}
+}
+```
+
+**2. Simple mapping between C# and IL code**
 
 Unlike design1 there is a one-to-one mapping between the number of IL methods and the number of C# methods. No extra methods are generated behind the scenes.
 
@@ -6899,4 +6945,165 @@ In fact there's no magic going on here at all. All that is happening is that met
 
 This makes it easier for developers to reason about what's going on in their code. Unlike design1, they would not be surprised when reflection or attributes don't work as they are expected to, since it's clear from the C# code that the covariant override methods are not actual overrides, but rather methods that simulate overrides.
 
-This also make the feature simpler to implement in the compiler.
+This should also make the feature simpler to implement in the compiler.
+
+**3. Consistent with current language syntax**
+
+The syntax is very similiar to that for explicit interface implementations. As such, this fits in well with the language, and more than that *this syntax could not sensibly be used for any other feature*. Therefore implementing this feature now is unlikely to ever prevent us implementing a different feature that wants to use this syntax.
+
+**4. Fully backwards compatible, and compatible with other .Net languages
+
+See section 10. How Design3 plays with other .Net code.
+
+**5. Does not prevent a full solution to covariant return types in the future**
+
+It will still be possible to implement covariant return types in the future if this feature is implemented, whether by design1, design2, some other design, or by full fledged runtime support. As such this is the most conservative solution to the problem of covariant return types, given that none of the designs feel like they are perfect solutions.
+
+It's only effect on other designs, is that design1 is now reduced to syntax sugar over this feature.
+
+#### Disadvantages
+
+**1. Increased boilerplate**
+
+Using a covariant return type now requires at least two method declerations, whereas both design1 and design2 only require 1.
+
+To achieve best performance each extra level of covariant overrides requires an extra method decleration per  level. For example:
+
+```csharp
+public class A
+{
+    public virtual A M() => new A();
+}
+
+public class B : A
+{
+    A A.M() => M();
+    public virtual B M() => new B();
+}
+
+public class C : B
+{
+    A A.M() => M();
+    B B.M() => M();
+    public virtual C M() => new C();
+}
+
+public class D : C
+{
+    A A.M() => M();
+    B B.M() => M();
+    C V.M() => M();
+    public virtual D M() => new D();
+}
+```
+
+This can lead to a lot of boilerplate with enough layers of nesting.
+
+**Developers may not write the most performant versions of covariant overrides**
+
+As explained above, to get best performance when there are multiple layers of overrides, a lot of boilerplate is required:
+
+```csharp
+public class A
+{
+    public virtual A M() => new A();
+}
+
+public class B : A
+{
+    A A.M() => M();
+    public virtual B M() => new B();
+}
+
+public class C : B
+{
+    A A.M() => M();
+    B B.M() => M();
+    public virtual C M() => new C();
+}
+
+public class D : C
+{
+    A A.M() => M();
+    B B.M() => M();
+    C V.M() => M();
+    public virtual D M() => new D();
+}
+```
+
+In practice most developers will probably end up writing:
+
+```csharp
+public class A
+{
+    public virtual A M() => new A();
+}
+
+public class B : A
+{
+    A A.M() => M();
+    public virtual B M() => new B();
+}
+
+public class C : B
+{
+    B B.M() => M();
+    public virtual C M() => new C();
+}
+
+public class D : C
+{
+    C V.M() => M();
+    public virtual D M() => new D();
+}
+```
+
+Whilst this is functionally identical, it can lead to significantly degraded performance in some cases
+
+For example a call to `((A)new D()).M()` will introduce 4 virtual function calls instead of just 2.
+
+**3. The complexity of the rules for this feature may confuse developers**
+
+The specification for this feature is quite complex. There are a lot of edge cases, and indeed it took me quite a few tries to get them all right. This may end up being confusing for developers, and surprising them.
+
+In practice though, I believe that the specification for all features is quite complex, but they are designed so that for common use cases **it just works**. There are always edge cases which increase the technical complexity of the feature, but in a good design, everything just feels right to the user of the feature.
+
+As such I believe, (though I am not certain) that the complexity of this feature will not be an issue in practice.
+
+### Personal Conclusions
+
+When considering a design for any new feature, two main points must be considered:
+
+1. The advantages of the feature must outway both it's costs, and the costs of implementing the feature (every feature starts with -100 points...).
+
+2. It may be best not to implement an imperfect feature now, if it will prevent us implementing a better one in the feature. On the other hand, do not let Perfect be the enemy of Good.
+
+With that in  mind, let us consider the proposed designs.
+
+**design2**
+
+I will start with design2, as it is the easiest to deal with. This design does not add anything to the language that could not be done previously, but rather adds syntax sugar over casts. This is not in and of itself a bad thing, but this limits its advantages.
+
+On the other hand, it suffers from backwards compatability issues, and issues with integration with other .Net languages. It also can hide boxing and unboxing, which can lead to hidden performance issues.
+
+It also is probably the most difficult design to implement, and also is the only design which requires immediately updating the tooling.
+
+As such I feel it's advantages do  not outway it's disadvantages.
+
+**design1**
+
+Design1 has the advantage of being simpler to implement than design2. It also is fully backwards compatible, and compatible with other .Net languages.
+
+It's main disadvantages are it's rough edges. A lot of things won't work exactly as they might be expected to by the developer, such as relection, attributes, and call stacks, and it will be a long time, if ever, till all these rough edges can be ironed out by better tooling.
+
+Nonetheless, if this were the only option I would go for it. However, I feel like it might be better to wait before rushing into an imperfect implementation of covariant return tyoes. Do we let Perfect be the enemy of Good here?
+
+**design3**
+
+I feel like design3 is the conservative choice. It is the easiest to implement, and suffers from the fewest downsides. It is also the least opinionated of the designs, and is the least likely to negatively impact future abilities to add features to C#.
+
+On the other hand, it does lead to increased boilerplate, and may make C# uglier, rather than neater, as the other 2 designs try to do.
+
+**final conclusion**
+
+I think design2 needs to be though through more. However design3 could, and in my opinion should, be implemented on a much shorter timescale.
