@@ -545,10 +545,10 @@ public class Dog : Animal
 ```
 
 In IL it is possible to override a method with a differently named method.
-Hence in the IL for class Dog we create a private sealed method GiveBirth'() that overrides Animal.GiveBirth();
-GiveBirth' calls a new virtual method GiveBirth() that returns a Dog.
+Hence in the IL for class Dog we create a private sealed method `Dog::Animal.GiveBirth()` that overrides `Animal::GiveBirth()`;
+`Dog::Animal.GiveBirth()` calls a new virtual method GiveBirth() that returns a Dog.
 
-Hence code calling Dog.GiveBirth() will call the new virtual method that returns a Dog.
+Hence code calling `Dog::GiveBirth()` will call the new virtual method that returns a Dog, whereas code calling `Animal::GiveBirth()` on an instance of a `Dog` would be resolved to `Dog::Animal.GiveBirth()` which would in turn call `Dog::GiveBirth()`.
 
 This is similiar to a technique already used to achieve Covariant return types with interfaces:
 ```csharp
@@ -1879,7 +1879,7 @@ For each extra step in the chain of covariant overrides, an extra method will be
 
 **case h**
 
-In this case we have to manually add in the attributes to the relevant methods. Whilst this works fine when all the methods are int he same assembly, it could cause issues when they are in multiple assemblies.
+In this case we have to manually add in the attributes to the relevant methods. Whilst this works fine when all the methods are in the same assembly, it could cause issues when they are in multiple assemblies. We will discuss this more later on.
 
 ```csharp
 .assembly Covariant {}
@@ -2975,7 +2975,7 @@ class Program
     }
 }
 ```
-This leads to the boxing and unboxing of `42` which can lead to performance issues and stress on the garbage collector.
+This leads to the boxing and unboxing of `42` which can lead to performance issues and stress on the garbage collector. Since the method is virtual it cannot be inlined, and the box avoided.
 
 Whereas now this can be written
 
@@ -3003,17 +3003,17 @@ Under Design1 no boxing or unboxing occurs.
 
 **4. Increased Type Safety**
 
-As seen in the above example, there can be cases where code which preiously could not be statically checked to be type safe, and required downcasting, can now be statically type checked.
+As seen in the above example, there can be cases where code which previously could not be statically checked to be type safe, and required downcasting, can now be statically type checked.
 
 #### Disadvantages
 
 **1. Hides Complexity**
 
-This makes it appear as if a method is an override of another method, when actually it is not, and we just make it *act* as if it is one using various tricks. As such it may be argued that we are hiding what is actually happening from the developer, which in some cases (as we shall see) may lead to unexpected results. Rather it may be better if give the developer more control over what happens instead, so he can generate similiar IL himself, but using C# code that makes it clearer what is happening internally. One way to do that may be to allow C# to override a method explicitly, similiarly to explicit interface implementations.
+This makes it appear as if a method is an override of another method, when actually it is not, and we just make it *act* as if it is one using various tricks. As such it may be argued that we are hiding what is actually happening from the developer, which in some cases (as we shall see) may lead to unexpected results. Rather it may be better if give the developer more control over what happens instead, so he can generate similiar IL himself, but using C# code that makes it clearer what is happening internally. One way to do that may be to allow C# to override a method explicitly, similiarly to explicit interface implementations. We will discuss this proposal in design3.
 
 **2. Performance issues**
 
-This design leads to an extra function call when calling the base method, which is dificult to inline unless the covariant override is marked as sealed. Whilst this would not make much of a difference to large functions, it could lead to performance issues for small functions.
+This design leads to an extra function call when calling the base method, which is dificult to inline unless the covariant override is marked as sealed. Whilst this would not make much of a difference to slow functions, it could lead to performance issues for fast functions called in a tight loop.
 
 **3. Extra method call appears in the call stack**
 
@@ -3073,7 +3073,7 @@ When Assembly 2 is compiled `SomeInheritedAttribute` is applied to `Dog.GiveBirt
 
 Now lets say `AnotherInheritedAttribute` is added to Animal.GiveBirth(), or `SomeInheritedAttribute` is removed.
 
-Until `Dog.GiveBirth()` is recompiled whilst referencing the new assembly, it wont be aware of these changes, and so its attributes will be incorrect. It also means that it will be impossible to use the same version of Assembly 2 with different versions of Assembly 1, and still have the attributes for Dog.GiveBirth() be correct.
+Until `Dog` is recompiled whilst referencing the new assembly, it wont be aware of these changes, and so its attributes will be incorrect. It also means that it will be impossible to use the same version of Assembly 2 with different versions of Assembly 1, and still have the attributes for Dog.GiveBirth() be correct.
 
 In short, adding an Inherited attribute to a public virtual method can now potentially be a Binary (but not Source) breaking change.
 
@@ -3178,9 +3178,11 @@ Then it could be inserted into the IL as follows:
 } // end of class Dog
 ```
 
-This gives the oppurtunity for other parts of .Net framework to access this information in the future. This means that in the long run it may be possible to solve disadvantages 3,4, and 5.
+This gives the oppurtunity for other parts of .Net framework to access this information in the future. This means that in the long run it may be possible to solve disadvantages 3, 4, and 5.
 
 The advantage of these solutions is that although they require changes to the runtime, standard library, tooling etc. this work is completely distinct to any work done for the core feature. As such, whether and when these updates are carried out does not preclude the introduction of Covariant Return Types into the C# language via changes in Roslyn. In fact, so long as the attribute is defined first, the work could even take place before any work is done on Roslyn - it is completely distinct work.
+
+At the moment attributes cannot use Type parameters. This means that the CovariantOverideAttribute may not be possible when the base type is an unconstrained Generic. However, in CIL it is theoretically possible for attributes to use type parameters. I believe though, that there may be issues when using it in practice - see https://github.com/dotnet/csharplang/blob/master/meetings/2017/LDM-2017-02-21.md#generic-attributes.
 
 **Solving disadvantage 3**
 
@@ -3191,11 +3193,12 @@ It may be possible for the libraries used to produce the stack trace, or the too
 It may be possible for System.Reflection to use this attribute to generate a MethodInfo that is aware that the covariant override method overrides a base method. Alternatively, an extra method or extension method could be added to MethodInfo, `GetCovariantOverrideBaseMethod` which will return the correct method.
 
 **Solving disadvantage 5**
-When loading an assembly,the runtime could run through the ILasm, adding or removing attributes as neccessary whenever it finds the `CovariantOverrideAttribute`. Alternatively, to avoid changes in the runtime, a tool could be created to do the same directly to a dll. This tool could then be run at any stage to make sure the Attributes are up to date, for example when running a Nuget Restore, or when creating an executable.
+
+When loading an assembly, or JITing a method, the runtime could run through the ILasm, adding or removing attributes as neccessary whenever it finds the `CovariantOverrideAttribute`. Alternatively, to avoid changes in the runtime, a tool could be created to do the same directly to a dll. This tool could then be run at any stage to make sure the Attributes are up to date, for example when running a Nuget Restore, or when creating an executable.
 
 ### 6.  Design2 (using an attribute to indicate the desired return type)
 
-Under this design an override with a covariant return type is compiled to an IL method with the same return type as its base method. However an attribute is added to the method which indicates the actual return type of the object. Consuming code then explicitly casts the object returned from the method to the type indicated by the Attribute.
+Under this design an override with a covariant return type is compiled to an IL method with the same return type as its base method. However an attribute is added to the method which indicates the actual return type of the object. Consuming code then explicitly casts the object returned from the method to the type indicated by the Attribute. This is similiar to type erasure in Java Generics, where the compiler inserts casts automatically into the bytecode.
 
 This would only work for conversions which can be safely reversed. However by definition identity and implicit reference conversions do not change the object being referenced, so this is not an issue.
 
@@ -3204,7 +3207,7 @@ This would only work for conversions which can be safely reversed. However by de
 Here is an example of the attribute that could be used, and which we will be using in all the examples of emited IL for the test cases:
 
 ```csharp
-[AttributeUsage(AttributeTargets.Method,AllowMultiple =false,Inherited =true)]
+[AttributeUsage(AttributeTargets.Method, AllowMultiple =false, Inherited =true)]
 public class ReturnTypeAttribute : Attribute
 {
     public ReturnTypeAttribute(Type returnType)
@@ -5127,9 +5130,9 @@ public abstract class DerivedFactory<TDerived, TBase> : Factory<TBase> where TDe
 }
 ```
 
-However, in CIL it is theoretically possible for attributes to use type parameters. However I believe there may be issues when using it in practice - see https://github.com/dotnet/csharplang/blob/master/meetings/2017/LDM-2017-02-21.md#generic-attributes. I don't know whether this would effect us here, since this attribute is only designed to be used at compile time. However given that this is only a proposal I will not investigate this further for now.
+However, in CIL it is theoretically possible for attributes to use type parameters. I believe though, that there may be issues when using it in practice - see https://github.com/dotnet/csharplang/blob/master/meetings/2017/LDM-2017-02-21.md#generic-attributes. I don't know whether this would effect us here, since this attribute is only designed to be used at compile time. However given that this is only a proposal I will not investigate this further for now.
 
-Either way, there are many other ways to indicate to the compiler the return type to cast to, so we can deal with this case as and when we come to it.
+Either way, there are many other ways to indicate to the compiler the return type to cast to, so we can deal with this case as and when we come to it. For example, we could simply use a string with the fully qualified type name, which the compiler could parse.
 
 The second example in this test case is:
 
@@ -5289,7 +5292,7 @@ public class Dog : Animal
 }
 ```
 
-Thus any casts whivh are automattically inserted in C# x.0, will have to be manually inserted in C# 7.0.
+Thus any casts whivh are automatically inserted in C# x.0, will have to be manually inserted in C# 7.0.
 
 This in and of itself is not a problem. It does however makes this design less attractive than Design1, where covariant return types would be able to be consumed identically from C# 7.0 and other .Net languages as from C# X.0.
 
@@ -5428,6 +5431,39 @@ Not only does this add complexity to the compiler, but it also will cause perfor
 **6. Tooling will have to be updated to recognise the ReturnTypeAttribute**
 
 Current tooling obviously does not recognise the ReturnTypeAttribute. They will have to be updated to do so. This could be a significant amount of work.
+
+**7. Reflection does not show the correct return type**
+
+For example:
+
+```csharp
+class Program
+{
+    static void Main(string[] args)
+    {
+         var t = typeof(Dog);
+	 var method = t.GetMethod("GiveBirth");
+	 Console.WriteLine(ReturnsDog(method)); // returns false, not true as might be expected.
+    }
+    
+    public static bool ReturnsDog(MethodInfo m) 
+    {
+        return m.ReturnType.Equals(typeof(Dog));
+    }
+}
+
+
+public class Animal
+{
+    public virtual Animal GiveBirth() => new Animal();
+}
+
+public class Dog : Animal
+{
+    public override Dog GiveBirth() => new Dog(); //Should Compile
+}
+```
+This could be fixed by updating System.Reflection to be aware of the ReturnTypeAttribute. However that would cause problematic behaviour when called on older version of C#. Alternatively an extra method or extension method could be added which returns the 'fixed' return type as a result of the ReturnTypeattribute.
 
 ### 9. Design3 (explicit virtual method overrides)
 
@@ -5764,7 +5800,7 @@ Furthermore, if an explicit method override is provided, no warning should occur
 
 It will be a compile time error to provide two explicit overrides of the same method, or an explicit and implicit override of the same method, but it is not an error to provide an explicit override of a method, and an explicit or implicit override of another method which hides that first method.
 
-If TDerived provides an explicit override of 'TBase::SomeMethod', and TDerived has no method which hides 'TBase::SomeMethod' and has at least the same visibility as 'TBase::SomeMethod', then the method `TBase::SomeMethod` will not be hidden on an instance of `TDerived` - eg. it is legal C# to write `new TDerived().SomeMethod()`. There are ways to make this code illegal in future C# versions, but no way to make it illegal in old C# versions. In order to preserve backwards compatibility, it thus seems that we will have to make this legal in future versions as well.
+If TDerived provides an explicit override of 'TBase::SomeMethod', and TDerived has no method which hides 'TBase::SomeMethod' and has at least the same visibility as 'TBase::SomeMethod', then the method `TBase::SomeMethod` will not be hidden on an instance of `TDerived` - eg. it is legal C# to write `new TDerived().SomeMethod()`. There are ways to make this call illegal in future C# versions, but no way to make it illegal in old C# versions. In order to preserve backwards compatibility, it thus seems that we will have to make this legal in future versions as well.
 
 As such I suggest it will be a compile time error for TDerived to provide an explicit override of 'TBase::SomeMethod', unless TDerived has a method (whether it's own or inherited) which hides 'TBase::SomeMethod' and has at least the same visibility as 'TBase::SomeMethod'. I will be going with this for the remainder of this proposal. However this point could be debated.
 
@@ -5780,7 +5816,7 @@ D) An explicit method override is marked `private` and cannot be called directly
 
 E) An explicit method override is marked `final` and cannot be overriden directly. However if `TDerivedDerived` is derived from `TDerived`, then `TDerivedDerived` may explicitly or implicitly override `TBase::SomeMethod`, even though `TDerived` explicitly overrides `TBase::SomeMethod`.
 
-F) A call to `TBase.SomeMethod()` in an explicit method override of `TBase::SomeMethod` calls `TBase::SomeMethod`.
+F) A call to `base.SomeMethod()` in an explicit method override of `TBase::SomeMethod` calls `TBase::SomeMethod` non-virtually.
 
 G) If `TDerivedDerived` is derived from `TDerived`, and does not explicitly or implicitly override `TBase::SomeMethod`, then if  `callvirt TBase::SomeMethod()` is called on an instance of TDerivedDerived, this call is resolved to the explicit override by TDerived of `TBase::SomeMethod()`.
 
@@ -6859,6 +6895,8 @@ As such this feature requires no changes by any language to consume it, and can 
 
 Indeed by handcrafting IL to implement this feature, and then compiling it into a dll, and referencing , it is possible to test this feature today in visual studio. Everything, including intellisense, works exactly as expected.
 
+As such this feature is fully backwards compatible with all versions of C#, and of other .Net languages.
+
 ### 11. Design3 Advantages/Disadvantages
 
 #### Advantages
@@ -6959,7 +6997,7 @@ See section 10. How Design3 plays with other .Net code.
 
 It will still be possible to implement covariant return types in the future if this feature is implemented, whether by design1, design2, some other design, or by full fledged runtime support. As such this is the most conservative solution to the problem of covariant return types, given that none of the designs feel like they are perfect solutions.
 
-It's only effect on other designs, is that design1 is now reduced to syntax sugar over this feature.
+It's only effect if implemented on other designs, is that design1 is now reduced to syntax sugar over this feature.
 
 #### Disadvantages
 
@@ -7106,4 +7144,4 @@ On the other hand, it does lead to increased boilerplate, and may make C# uglier
 
 **final conclusion**
 
-I think design2 needs to be though through more. However design3 could, and in my opinion should, be implemented on a much shorter timescale.
+I think design2 needs to be thought through more. However design3 could, and in my opinion should, be implemented on a much shorter timescale.
